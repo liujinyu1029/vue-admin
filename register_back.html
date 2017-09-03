@@ -1,0 +1,527 @@
+#set($layout = "/layout/main.vm")
+###parse("supplierApply/register_part1.vm")
+<style>
+    .vertical-center{
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    .mt20{marrgin-top:20px;}
+    .pb20{padding-bottom:20px;}
+    .pb50{padding-bottom:50px;}
+</style>
+
+<div v-cloak id="register">
+    <div v-cloak class="pb50">
+        <el-steps v-cloak :center="true" space='15%' align-center=false :active="active" finish-status="success">
+            <el-step v-cloak title="供应商账号"></el-step>
+            <el-step v-cloak title="基本信息"></el-step>
+            <el-step v-cloak title="合作信息"></el-step>
+            <el-step v-cloak title="其他证件"></el-step>
+            <el-step v-cloak title="资质信息"></el-step>
+            <el-step v-cloak title="结账信息"></el-step>
+            <el-step v-cloak title="提交审核"></el-step>
+        </el-steps>
+    </div>
+    <div v-cloak class="top_line pt20">
+        <div  v-show="active==0">
+##            <h3>供应商账号</h3>
+            <el-row v-cloak>
+                <el-col :span="12" :offset="5">
+                    <el-form ref="registerForm" :model="registerData" label-width="125px">
+                        <el-form-item  label="手机号" prop="phone"
+                                      :rules="[
+                            { required: true, message: '请输入手机号', trigger: 'blur,change' }
+                        ]">
+                            <el-input v-model="registerData.phone" auto-complete="off"></el-input>
+                        </el-form-item>
+                        <el-form-item  label="确认手机号" prop="phone1"
+                                      :rules="[
+                            { required: true, message: '确认手机号', trigger: 'blur,change' }
+                        ]">
+                            <el-input  v-model="registerData.phone1" auto-complete="off"></el-input>
+                        </el-form-item>
+                    </el-form>
+                </el-col>
+            </el-row>
+        </div>
+        <div v-cloak v-show="active==1">
+##            <h3 >基本信息</h3>
+            <el-row>
+                <el-col :offset="6" :span="12">
+                    <el-form  label-width="125px">
+                        <el-form-item   label="联系人">
+                            <el-input  v-model="registerData.contactPerson"></el-input>
+                        </el-form-item>
+                        <el-form-item  label="联系电话">
+                            <el-input  v-model="registerData.contactPhone"></el-input>
+                        </el-form-item>
+                        <el-form-item  label="邮箱">
+                            <el-input  v-model="registerData.email"></el-input>
+                        </el-form-item>
+                        <el-form-item  label="地址">
+                            <el-input  v-model="registerData.address"></el-input>
+                        </el-form-item>
+                    </el-form>
+                </el-col>
+            </el-row>
+        </div>
+        <div v-cloak v-show="active==2">
+##            <h3 >合作信息</h3>
+            <el-row>
+                <el-col :offset="6" :span="12">
+                    <el-form  v-show="active==2"  label-width="125px">
+                        <el-form-item  label="发票类型">
+                            <el-select  style="width: 100%" v-model="registerData.invoiceType" placeholder="请选择发票类型">
+                                <el-option label="专用发票" value="1"></el-option>
+                                <el-option label="普通发票" value="2"></el-option>
+                                <el-option label="无" value="3"></el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item  label="支付方式">
+                            <el-select  style="width: 100%" v-model="registerData.payWay" placeholder="请选择支付方式">
+                                <el-option label="现金" value="1"></el-option>
+                                <el-option label="转账" value="2"></el-option>
+                                <el-option label="支票" value="3"></el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="账期起算日">
+                            <el-select  style="width: 100%" v-model="registerData.accountPeriodStart" placeholder="请选择账单起算日">
+                                <el-option label="入库日期" value="1"></el-option>
+                                <el-option label="订单日期" value="2"></el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="性质">
+                            <el-select  style="width: 100%" v-model="registerData.nature" placeholder="请选择活动区域">
+                                <el-option label="个人" value="1"></el-option>
+                                <el-option label="个体工商户" value="2"></el-option>
+                                <el-option label="企业法人" value="3"></el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="账单天数">
+                            <el-input  v-model="registerData.accountDay"></el-input>
+                        </el-form-item>
+                        <el-form-item label="延期付款天数">
+                            <el-input  v-model="registerData.accountDelayDay"></el-input>
+                        </el-form-item>
+                    </el-form>
+                </el-col>
+            </el-row>
+        </div>
+        <div v-cloak v-show="active==3">
+##            <h3 >其他证件</h3>
+            <el-row>
+                <el-col :offset="6" :span="12">
+                    <el-form   label-width="138px">
+                        <el-form-item label="一级分类">
+                            <el-select style="width: 100%" filterable v-model="registerData.coopInfo[0].class1" placeholder="请选择活动区域">
+                                <el-option v-if="classifyList.length > 0"
+                                           v-for="item in classifyList"
+                                           :key="item.id"
+                                           :label="item.name"
+                                           :value="item.id">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="采购专员">
+                            <el-select  style="width: 100%" filterable v-model="registerData.coopInfo[0].purchaser" placeholder="请选择活动区域">
+                                <el-option v-if="purchaserList.length > 0"
+                                           v-for="item in purchaserList"
+                                           :key="item.id"
+                                           :label="item.name"
+                                           :value="item.id">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        <div v-cloak v-for="(coopInfo, index) in tempCoopInfo">
+                            <el-form-item><hr></el-form-item>
+                            <el-form-item label="一级分类">
+                                <el-select style="width: 80%" filterable v-model="registerData.coopInfo[index+1].class1" placeholder="请选择活动区域">
+                                    <el-option label="区域一" value="shanghai"></el-option>
+                                    <el-option v-if="classifyList.length > 0"
+                                               v-for="item in classifyList"
+                                               :key="item.id"
+                                               :label="item.name"
+                                               :value="item.id">
+                                    </el-option>
+                                </el-select>
+                                <el-button @click="removeDomain(coopInfo)" :disabled="active==1" type="primary" icon="delete">删除</el-button>
+                            </el-form-item>
+                            <el-form-item  label="采购专员">
+                                <el-select filterable style="width: 100%" v-model="registerData.coopInfo[index+1].purchaser" placeholder="请选择活动区域">
+                                    <el-option label="区域一" value="shanghai"></el-option>
+                                    <el-option v-if="purchaserList.length > 0"
+                                               v-for="item in purchaserList"
+                                               :key="item.id"
+                                               :label="item.name"
+                                               :value="item.id">
+                                    </el-option>
+                                </el-select>
+                            </el-form-item>
+                        </div>
+                        <el-form-item label="是否使用分拣客户端">
+                            <el-button class="add_btn" @click="addDomain" :disabled="active==1" type="primary" icon="plus">更多合同</el-button>
+                            <el-switch
+                                       v-model="registerData.useSortingApp"
+                                       on-color="#13ce66"
+                                       off-color="#ff4949">
+                            </el-switch>
+                            <div  style="display: inline-block">
+                                <label class="el-form-item__label mL20">是否预付</label>
+                                <el-switch
+                                           v-model="registerData.isPrepaid"
+                                           on-color="#13ce66"
+                                           off-color="#ff4949">
+                                </el-switch>
+                            </div>
+                        </el-form-item>
+                    </el-form>
+                </el-col>
+            </el-row>
+            <div v-cloak class="top_line">
+##                <h3 >资质信息</h3>
+                <el-row>
+                    <el-col :offset="6" :span="12">
+                        <el-form  label-width="138px">
+                            <el-form-item  label="配送方式">
+                                <el-select style="width: 100%" v-model="registerData.deliveryType" placeholder="请选择活动区域">
+                                    <el-option label="自营" value="1"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </el-form>
+                    </el-col>
+                </el-row>
+            </div>
+        </div>
+        <div v-cloak v-show="active==4">
+##            <h3 >结账信息</h3>
+            <div class="three-in-one">
+                <label class="el-form-item__label p5">三证合一</label>
+                <el-switch
+                           v-model="registerData.qualify.isThreeInOne"
+                           on-color="#13ce66"
+                           off-color="#ff4949">
+                </el-switch>
+            </div>
+            <el-row>
+                <el-col v-cloak :offset="2" :span="10">
+                    <el-form v-cloak label-width="138px">
+                        <el-form-item label="公司名称"
+                                      :rules="[
+                        { required: true, message: '手机号不能为空'}]">
+                            <el-input v-model="registerData.qualify.biz.name" auto-complete="off"></el-input>
+                        </el-form-item>
+                        <el-form-item label="供应商类型">
+                            <el-select style="width: 100%" v-model="registerData.qualify.biz.supplierType1" placeholder="请选择活动区域">
+                                <el-option label="虚拟供应商" value="1"></el-option>
+                                <el-option label="内部供应商" value="2"></el-option>
+                                <el-option label="基地" value="4"></el-option>
+                                <el-option label="生产商" value="5"></el-option>
+                                <el-option label="代理商" value="6"></el-option>
+                                <el-option label="批发商" value="7"></el-option>
+                                <el-option label="经销商" value="8"></el-option>
+                            ##                                <el-option label="外部供应商" value="3"></el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="营业执照编号">
+                            <el-input v-model="registerData.qualify.biz.code" auto-complete="off"></el-input>
+                        </el-form-item>
+                        <el-form-item label="注册地址">
+                            <el-input v-model="registerData.qualify.biz.registerAddress" auto-complete="off"></el-input>
+                        </el-form-item>
+                        <el-form-item label="有效期(截止日)">
+                            <el-date-picker style="width: 100%"
+                                            v-model="registerData.qualify.biz.endTime"
+                                            type="date"
+                                            placeholder="选择日期">
+                            </el-date-picker>
+                        </el-form-item>
+                        <el-form-item label="法人姓名"
+                                      :rules="[
+                        { required: true, message: '手机号不能为空'}]">
+                            <el-input v-model="registerData.qualify.biz.bizPersonName" auto-complete="off"></el-input>
+                        </el-form-item>
+                        <el-form-item label="身份证号"
+                                      :rules="[
+                        { required: true, message: '手机号不能为空'}]">
+                            <el-input v-model="registerData.qualify.biz.idNumber" auto-complete="off"></el-input>
+                        </el-form-item>
+                    </el-form>
+                </el-col>
+                <el-col v-cloak  :span="10">
+                    <div>
+                        <label class="el-form-item__label upload__label">上传营业执照</label>
+                        <el-upload
+                                drag
+                                :headers="{'dataName':'registerData.qualify.biz.bizPic'}"
+                                :show-file-list="false"
+                                :on-success="handleAvatarScucess"
+                                :on-remove="handleRemove"
+                                :on-progress="handleProgress"
+                                :param="registerData.qualify.biz.bizPic"
+                                action="/uploadImg/upload">
+                            <img  v-if="registerData.qualify.biz.bizPic" :src="registerData.qualify.biz.bizPic" class="avatar upload__img">
+                            <i  v-else class="el-icon-upload"></i>
+                            <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                        </el-upload>
+                    </div>
+                    <div>
+                        <label class="el-form-item__label upload__label">上传身份证(正面)</label>
+                        <el-upload
+                                class="reg_upload"
+                                drag
+                                :show-file-list="false"
+                                :on-success="handleAvatarScucess"
+                                action="/uploadImg/upload">
+                            <img v-if="registerData.qualify.biz.idCardFrontPic" :src="registerData.qualify.biz.idCardFrontPic" class="avatar upload__img">
+                            <i  v-else class="el-icon-upload"></i>
+                            <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                        </el-upload>
+                    </div>
+                    <div>
+                        <label class="el-form-item__label upload__label">上传身份证(反面)</label>
+                        <el-upload
+                                class="reg_upload"
+                                drag
+                                :show-file-list="false"
+                                :on-success="handleAvatarScucess"
+                                action="/uploadImg/upload">
+                            <img v-if="registerData.qualify.biz.idCardReversedPic" :src="registerData.qualify.biz.idCardReversedPic" class="avatar upload__img">
+                            <i  v-else class="el-icon-upload"></i>
+                            <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                        </el-upload>
+                    </div>
+                </el-col>
+            </el-row>
+            <div v-cloak class="top_line">
+##                <h3>组织机构信息</h3>
+                <el-row>
+                    <el-col :offset="2" :span="10">
+                        <el-form  label-width="138px">
+                            <el-form-item  label="组织机构代码">
+                                <el-input v-model="registerData.qualify.org.orgCode" auto-complete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="有效期(截止日)">
+                                <el-date-picker style="width: 100%"
+                                                v-model="registerData.qualify.org.endTime"
+                                                type="date"
+                                                placeholder="选择日期">
+                                </el-date-picker>
+                            </el-form-item>
+                        </el-form>
+                    </el-col>
+                    <el-col :span="10">
+                        <div>
+                            <label class="el-form-item__label upload__label">上传营业执照</label>
+                            <el-upload
+                                    class="reg_upload"
+                                    drag
+                                    action="//jsonplaceholder.typicode.com/posts/"
+                                    mutiple>
+                                <i class="el-icon-upload"></i>
+                                <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                            </el-upload>
+                        </div>
+                    </el-col>
+                </el-row>
+            </div>
+            <div v-cloak class="top_line">
+##                <h3>税务登记信息</h3>
+                <el-row v-cloak>
+                    <el-col :offset="2" :span="10">
+                        <el-form  label-width="138px">
+                            <el-form-item  label="纳税人识别号">
+                                <el-input v-model="registerData.qualify.tax.taxCode" auto-complete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="供应商纳税性质">
+                                <el-select v-cloak style="width: 100%" v-model="registerData.qualify.tax.taxType" placeholder="请选择活动区域">
+                                    <el-option label="一般纳税人" value="1"></el-option>
+                                    <el-option label="小规模纳税人" value="2"></el-option>
+                                    <el-option label="农民" value="3"></el-option>
+                                    <el-option label="农民专业合作社" value="4"></el-option>
+                                    <el-option label="其他个人" value="5"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </el-form>
+                    </el-col>
+                    <el-col :span="10">
+                        <div>
+                            <label class="el-form-item__label upload__label">上传税务登记</label>
+                            <el-upload
+                                    class="reg_upload"
+                                    drag
+                                    action="//jsonplaceholder.typicode.com/posts/"
+                                    mutiple>
+                                <i class="el-icon-upload"></i>
+                                <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                            </el-upload>
+                        </div>
+                    </el-col>
+                </el-row>
+            </div>
+            <div v-cloak class="top_line">
+##                <h3>开户许可信息</h3>
+                <el-row>
+                    <el-col :offset="2" :span="10">
+                        <el-form  label-width="138px">
+                            <el-form-item  label="开户名">
+                                <el-input v-model="registerData.qualify.account.accountBankNo" auto-complete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="开户行行号">
+                                <el-input v-model="registerData.qualify.account.accountBankNo" auto-complete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="开户行名称">
+                                <el-input v-model="registerData.qualify.account.accountBankName" auto-complete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="账号">
+                                <el-input v-model="registerData.qualify.account.bankCode" auto-complete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="银行">
+                                <el-input v-model="registerData.qualify.account.accountBankNo" auto-complete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="省份">
+                                <el-input v-model="registerData.qualify.account.Province" auto-complete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="城市">
+                                <el-input v-model="registerData.qualify.account.city" auto-complete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="是否对私">
+                                <el-input v-model="registerData.qualify.account.isPrivate" auto-complete="off"></el-input>
+                            </el-form-item>
+                        </el-form>
+                    </el-col>
+                    <el-col  :span="10">
+                        <div>
+                            <label class="el-form-item__label upload__label">上传营业执照</label>
+                            <el-upload
+                                    class="reg_upload"
+                                    drag
+                                    action="//jsonplaceholder.typicode.com/posts/"
+                                    mutiple>
+                                <i class="el-icon-upload"></i>
+                                <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                            </el-upload>
+                        </div>
+                    </el-col>
+                </el-row>
+                </divv-cloak>
+            </div>
+        </div>
+    </div>
+    <div v-cloak class="footer-btn">
+        <div style="float: right;">
+            <el-button @click="lastStep" :disabled="active==0" type="primary" icon="arrow-left">上一步</el-button>
+            <el-button @click="nextStep" type="primary">{{active != 6 ? '下一步' : '提交'}}<i class="el-icon-arrow-right el-icon--right"></i></el-button>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    new Vue({
+        el:'#register',
+        created:function() {
+
+        },
+        data:{
+            active:0,
+            classifyList:[],
+            purchaserList:[],
+            bankList:[],
+            tempCoopInfo:[],
+            registerData:{
+                phone:'',
+                phone1:'',
+                contactPerson:'',//联系人
+                contactPhone:'',//联系电话
+                email:'',       //邮箱
+                address:'',     //地址
+                invoiceType:'', //发票类型
+                payWay:'',      //支付方式
+                accountPeriodStart:'',//账期起算日（1.下单日期，2.入库日期）
+                nature:'',      //性质
+                accountDay:'',  //账单天数
+                accountDelayDay:'',//延期付款天数
+
+
+                coopInfo:[{class1:'',purchaser:''}],
+                useSortingApp:'',//是否使用分拣客户端
+                isPrepaid:'',//是否预付
+                deliveryType:'',//配送方式
+
+                qualify: {
+                    isThreeInOne:'',
+                    biz:{       //营业执照信息
+                        name: '',
+                        supplierType1: '',//供应商类型 （1：虚拟供应商，2：内部供应商，4：基地，5：生产商，6：代理商，7：批发商，8：经销商，9：个人）
+                        supplierType2: '',//供应商类型2 （当供应商类型为代理商时，此字段有意义， 1：一级代理商，2：二级代理商）
+                        code:'',
+                        registerAddress: '',//注册地址
+                        endTime: '',
+                        bizPersonName: '',//法人姓名
+                        idNumber: '',//身份证号
+                        bizPic: '',
+                        idCardFrontPic: '',
+                        idCardReversedPic: '',
+                    },
+                    org:{
+                        orgCode:'',
+                        endTime:'',
+                        pic:''
+                    },
+                    tax:{
+                        taxType:'',
+                        taxCode:'',
+                        pic:'',
+                    },
+                    account:{
+                        accountBankNo:'',
+                        accountBankName:'',
+                        account:'',
+                        bankCode:'',
+                        Province:'',
+                        city:'',
+                        isPrivate:'',//是否对私
+                        pic:''
+                    },
+                    extList:[]
+                },
+            }
+        },
+        methods:{
+            lastStep:function() { //上一步
+                if (this.active-- <= 0) this.active = 0;
+            },
+            nextStep:function() { //下一步
+                return this.active ++;
+            },
+            handleRemove:function(file, fileList) {
+                console.log(file, fileList);
+            },
+            handleProgress:function(event, file, fileList) {
+                console.log('----->',this,event.target);
+            },
+            handleAvatarScucess:function(res, file){
+                console.log(this);
+                if (res.ret != -1){
+                    this.registerData.qualify.biz.bizPic = URL.createObjectURL(file.raw);
+                }else {
+                #[[this.$message.error(res.msg);]]#
+                }
+            },
+            addDomain:function() { //更多合同
+                this.registerData.coopInfo.push({
+                    class1: '',
+                    purchaser:'',
+                });
+                this.tempCoopInfo = this.registerData.coopInfo.slice(1);
+            },
+            removeDomain:function(item) { //删除合同
+                var index = this.registerData.coopInfo.indexOf(item)
+                if (index !== -1) {
+                    this.registerData.coopInfo.splice(index, 1);
+                    this.tempCoopInfo.splice(index - 1, 1)
+                }
+            },
+        }
+    })
+</script>

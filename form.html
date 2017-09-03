@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+  <meta charset="UTF-8">
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-default/index.css">
+  <!-- 先引入 Vue -->
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <!-- 引入组件库 -->
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<style>
+ul{list-style:none;}
+.aptitude .cont{border-bottom: 1px dashed #333; }
+.aptitude .cont .ul1{list-style:none;}
+.aptitude .cont .ul1 li{overflow: hidden;line-height: 30px;}
+.aptitude .cont .ul1 li .tit{width:150px; text-align: right;float: left;margin-right: 10px;}
+.aptitude .cont .ul1 li .tit em{color:red;font-family: 'Arial Normal', 'Arial';}
+.aptitude .cont .ul1 li{}
+.aptitude .cont .ul1 li{}
+.aptitude .cont{}
+[v-cloak]{display: none;}
+</style>
+</head>
+<body>
+<div id="formapp" v-cloak>
+	<el-form v-cloak ref="form" :model="form" :rules="rules" label-width="130px" @submit.prevent="onSubmit" style="margin:20px;width:10%;min-width:600px;">
+		<h3 style='padding-top: 20px;'>执照类型</h3>
+		<el-form-item label="">
+			<el-radio-group v-model="form.licenseType">
+				<el-radio label="1">普通执照</el-radio>
+				<el-radio label="2">三证合一</el-radio>
+			</el-radio-group>
+		</el-form-item>
+		<!-- 营业执照信息 -->
+		<h3 style='border-top: 1px dashed #333;padding-top: 20px;'>营业执照信息</h3>
+		<el-form-item label="公司名称" prop="companyName">
+        	<el-input v-model="form.companyName" placeholder="请输入公司名称" size="small" style="width:300px;"></el-input>
+		</el-form-item>
+		<el-form-item label="公司类型" prop="status">
+			<el-select v-model="form.status" placeholder="请选择">
+	          <el-option label="虚拟供应商" value="1"></el-option>
+	          <el-option label="内部供应商" value="2"></el-option>
+	          <el-option label="基地生产商" value="3"></el-option>
+	          <el-option label="代理商" value="4"></el-option>
+	          <el-option label="经销商" value="5"></el-option>
+	          <el-option label="批发商" value="6"></el-option>
+	          <el-option label="全部" value="-1"></el-option>
+			</el-select>
+		</el-form-item>
+		<el-form-item label="是否源头">
+			<el-radio-group v-model="form.source">
+		        <el-radio label="1" style="margin-right: 0px;">是</el-radio>
+		        <el-radio label="2">否</el-radio>
+			</el-radio-group>
+		</el-form-item>
+		<el-form-item label="营业执照编号" prop="busLicenNum">
+	        <el-input v-model="form.busLicenNum" placeholder="请按照营业执照上的编号填写" size="small" style="width:300px;"></el-input>
+		</el-form-item>
+		<el-form-item label="注册地址" prop="regisAddr">
+	        <el-input v-model="form.regisAddr" placeholder="请按照营业执照上的详细地址填写" size="small" style="width:300px;"></el-input>
+		</el-form-item>
+		<el-form-item label="有效期(截止日)" prop="effecDate">
+	        <el-date-picker
+	          v-model="form.effecDate"
+	          type="date"
+	          placeholder="选择日期">
+	        </el-date-picker>
+		</el-form-item>
+		<el-form-item label="营业执照电子版" prop="upLoad">
+			<span style="color:#aaa">请上传扫描的电子版且必须加盖企业彩色公章</span>
+			<el-upload
+			  action=""
+			  list-type="picture-card"
+			  :on-preview="handlePictureCardPreview"
+			  :on-remove="handleRemove">
+			  <i class="el-icon-plus"></i>
+			</el-upload>
+			<el-dialog v-model="form.dialogVisible" size="tiny">
+			  <img width="100%" :src="form.dialogImageUrl" alt="">
+			</el-dialog>
+			<span style="color:#aaa">文件大小2MB以内，支持JPG、BMP、JPEG、PNG格式</span>
+		</el-form-item>
+		<el-form-item label="法人姓名" prop="legalPersonName">
+	        <el-input v-model="form.legalPersonName" placeholder="请按照营业执照上的编号填写" size="small" style="width:300px;"></el-input>
+		</el-form-item>
+		<el-form-item label="法人身份证号" prop="legalPersonId">
+	        <el-input v-model="form.legalPersonId" placeholder="请输入身份证号" size="small" style="width:300px;"></el-input>
+		</el-form-item>
+		<el-form-item label="身份证电子版" prop="upLoad1">
+			<span style="color:#aaa">身份证要求正反两面且必须加盖开店公司彩色公章</span>
+			<el-upload
+			  action=""
+			  list-type="picture-card"
+			  :on-preview="handlePictureCardPreview1"
+			  :on-remove="handleRemove">
+			  <i class="el-icon-plus"></i>
+			</el-upload>
+			<el-dialog v-model="form.dialogVisible1" size="tiny">
+			  <img width="100%" :src="form.dialogImageUrl1" alt="">
+			</el-dialog>
+			<span style="color:#aaa">文件大小2MB以内，支持JPG、BMP、JPEG、PNG格式</span>
+		</el-form-item>
+
+		<!-- 组织机构信息 -->
+		<h3 style='border-top: 1px dashed #333;padding-top: 20px;'>组织机构信息</h3>
+		<el-form-item label="组织机构代码" prop="organizationCode">
+	        <el-input v-model="form.organizationCode" placeholder='请按组织机构代码证上的代码填写,不能省"--"' size="small" style="width:300px;"></el-input>
+		</el-form-item>
+		<el-form-item label="有效期(截止日)" prop="effecDate1">
+	        <el-input v-model="form.effecDate1" placeholder="请输入身份证号" size="small" style="width:300px;"></el-input>
+		</el-form-item>
+  		<el-form-item label="营业执照电子版" prop="upLoad2">
+			<span style="color:#aaa">请上传扫描的电子版且必须加盖企业彩色公章</span>
+			<el-upload
+			  action=""
+			  list-type="picture-card"
+			  :on-preview="handlePictureCardPreview2"
+			  :on-remove="handleRemove">
+			  <i class="el-icon-plus"></i>
+			</el-upload>
+			<el-dialog v-model="form.dialogVisible2" size="tiny">
+			  <img width="100%" :src="form.dialogImageUrl2" alt="">
+			</el-dialog>
+			<span style="color:#aaa">文件大小2MB以内，支持JPG、BMP、JPEG、PNG格式</span>
+		</el-form-item>
+
+		<!-- 税务登记信息 -->
+		<h3 style='border-top: 1px dashed #333;padding-top: 20px;'>税务登记信息</h3>
+		<el-form-item label="纳税性质" prop="taxNature">
+			<el-select v-model="form.taxNature" placeholder="请选择">
+	          <el-option label="小规模纳税人" value="1"></el-option>
+	          <el-option label="农民" value="2"></el-option>
+	          <el-option label="农民专业合作社" value="3"></el-option>
+	          <el-option label="其他个人" value="4"></el-option>
+	          <el-option label="一般纳税人" value="5"></el-option>
+			</el-select>
+		</el-form-item>
+		<el-form-item label="纳税人识别号" prop="taxpayerId">
+	        <el-input v-model="form.taxpayerId" placeholder="请输入身份证号" size="small" style="width:300px;"></el-input>
+		</el-form-item>
+  		<el-form-item label="税务登记证电子版" prop="taxRegCerEdition">
+			<span style="color:#aaa">请上传扫描的电子版且必须加盖企业彩色公章</span>
+			<el-upload
+			  action=""
+			  list-type="picture-card"
+			  :on-preview="handlePictureCardPreview3"
+			  :on-remove="handleRemove">
+			  <i class="el-icon-plus"></i>
+			</el-upload>
+			<el-dialog v-model="form.dialogVisible3" size="tiny">
+			  <img width="100%" :src="form.dialogImageUrl3" alt="">
+			</el-dialog>
+			<span style="color:#aaa">文件大小2MB以内，支持JPG、BMP、JPEG、PNG格式</span>
+		</el-form-item>
+		<el-form-item>
+		    <el-button type="primary" @click="submitForm('form')">提交审核</el-button>
+		    <el-button @click="resetForm('form')">重置</el-button>
+  		</el-form-item>
+
+	</el-form>
+</div>
+
+
+<script type="text/javascript">
+  var formapp = new Vue({
+    el:'#formapp',
+    data() {
+		return {
+			form: {
+				licenseType:'1',
+		        companyName:'',
+		        status:'-1',
+		        source:'1',
+		        busLicenNum:'',
+		        regisAddr:'',
+		        effecDate:'',
+		        legalPersonName:'',
+		        legalPersonId:'',
+		        dialogImageUrl: '',
+        		dialogVisible: false,
+        		dialogImageUrl1: '',
+        		dialogVisible1: false,
+        		dialogImageUrl2: '',
+        		dialogVisible2: false,
+        		organizationCode:'',
+        		effecDate1:'',
+        		effecDate2:'',
+        		taxNature:'',
+			},
+			rules: {
+				companyName: [
+					{ required: true, message: '请输入公司名称', trigger: 'blur' }
+				],
+				status: [
+					{ required: true, message: '请选择公司类型', trigger: 'blur' }
+				],
+				source: [
+					{ required: true, message: '请选择是否源头', trigger: 'change' }
+				],
+				busLicenNum: [
+					{ required: true, message: '请输入营业执照编号', trigger: 'blur' }
+				],
+				regisAddr: [
+					{ required: true, message: '请输入注册地址', trigger: 'blur' }
+				],
+				effecDate: [
+					{ type: 'date', required: true, message: '请选择日期', trigger: 'change' }
+				],
+				effecDate1: [
+					{ type: 'date', required: true, message: '请选择日期', trigger: 'change' }
+				],
+				effecDate2: [
+					{ type: 'date', required: true, message: '请选择日期', trigger: 'change' }
+				],
+				legalPersonName: [
+					{ required: true, message: '请填写活动形式', trigger: 'blur' }
+				],
+				legalPersonId: [
+					{ required: true, message: '请填写法人身份证号', trigger: 'blur' }
+				],
+				organizationCode: [
+					{ required: true, message: '请填写组织机构代码', trigger: 'blur' }
+				],
+				taxNature: [
+					{ required: true, message: '请选择纳税性质', trigger: 'blur' }
+				],
+				taxpayerId: [
+					{ required: true, message: '请填写纳税人识别号', trigger: 'blur' }
+				],
+				taxRegCerEdition: [
+					{ required: true, message: '请上传图片', trigger: 'blur' }
+				],
+				upLoad: [
+					{ required: true, message: '请上传图片', trigger: 'blur' }
+				],
+				upLoad1: [
+					{ required: true, message: '请上传图片', trigger: 'blur' }
+				],
+				upLoad2: [
+					{ required: true, message: '请上传图片', trigger: 'blur' }
+				],
+				xxxxxx: [
+					{ required: true, message: '', trigger: 'blur' }
+				],
+				xxxxxx: [
+					{ required: true, message: '', trigger: 'blur' }
+				],
+		    }
+		}
+	},
+	methods: {
+		submitForm(formName) {
+			console.log('111',this.$refs[formName])
+	        this.$refs[formName].validate((valid) => {
+	        	console.log('valid',valid)
+	          if (valid) {
+	            alert('submit!');
+	          } else {
+	            console.log('error submit!!');
+	            return false;
+	          }
+	        });
+		},
+		resetForm(formName) {
+			this.$refs[formName].resetFields();
+		},
+		handleRemove(file, fileList) {
+			console.log(file, fileList);
+		},
+		handlePictureCardPreview(file) {
+			this.form.dialogImageUrl = file.url;
+			this.dialogVisible = true;
+		},
+		handlePictureCardPreview1(file) {
+			this.form.dialogImageUrl1 = file.url;
+			this.dialogVisible1 = true;
+		},
+		handlePictureCardPreview2(file) {
+			this.form.dialogImageUrl2 = file.url;
+			this.dialogVisible2 = true;
+		},
+		handlePictureCardPreview3(file) {
+			this.form.dialogImageUrl3 = file.url;
+			this.dialogVisible3 = true;
+		}
+
+	}
+  })
+</script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <meta charset="UTF-8">
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-default/index.css">
+  <!-- 先引入 Vue -->
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <!-- 引入组件库 -->
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+</head>
+<body>
+<style>
+    .audit_tit {line-height: 40px;text-indent: 20px;}
+    .el-form-item__label{color:#a09f9f}
+    .el-upload-list__item-delete{display: none !important;}
+    .el-upload-list__item-status-label{display: none !important;}
+    .el-upload.el-upload--picture-card{display: none;}
+    .el-dialog--tiny{width:50%;}
+</style>
+<div id="aptitude" class="aptitude">
+    <el-form :model="supplierApplyData" label-width="180px">
+        <div class="audit_tit">
+            <span>营业执照信息</span>
+        </div>
+        <el-form-item label='公司名称'>
+            <span>{{supplierApplyData.name}}</span>
+        </el-form-item>
+        <el-form-item label='公司类型'>
+            <span>{{supplierApplyData.name}}</span>
+        </el-form-item>
+        <el-form-item label='是否源头'>
+            <span>{{supplierApplyData.name}}</span>
+        </el-form-item>
+        <el-form-item label='营业执照编号'>
+            <span>{{supplierApplyData.name}}</span>
+        </el-form-item>
+        <el-form-item label='注册地址'>
+            <span>{{supplierApplyData.name}}</span>
+        </el-form-item>
+        <el-form-item label='有效期（截止日）'>
+            <span>{{supplierApplyData.name}}</span>
+        </el-form-item>
+        <el-form-item label='营业执照电子版'>
+            <el-upload
+                    action=""
+                    list-type="picture-card"
+                    :file-list="fileList1"
+                    :on-preview="handlePictureCardPreview"
+                    :on-remove="handleRemove">
+            </el-upload>
+            <el-dialog v-model="dialogVisible" size="tiny">
+                <img width="100%" :src="dialogImageUrl" alt="">
+            </el-dialog>
+        </el-form-item>
+        <el-form-item label='法人姓名'>
+            <span>{{supplierApplyData.name}}</span>
+        </el-form-item>
+        <el-form-item label='法人身份证号'>
+            <span>{{supplierApplyData.name}}</span>
+        </el-form-item>
+        <el-form-item label='身份证电子版'>
+            <el-upload
+                    action=""
+                    list-type="picture-card"
+                    :file-list="fileList2"
+                    :on-preview="handlePictureCardPreview"
+                    :on-remove="handleRemove">
+            </el-upload>
+        </el-form-item>
+        <div style="line-height:50px;background:#eee;">
+            <span style="margin-right: 50px;padding-left:30px;">审核结果</span>
+            <el-radio-group v-model="radio2">
+                <el-radio :label="1" style="margin-right:20px;">通过</el-radio>
+                <el-radio :label="2">驳回</el-radio>
+            </el-radio-group>
+            <el-input
+                    type="textarea"
+                    v-show="radio2==2"
+                    :rows="2"
+                    placeholder="请输入内容"
+                    v-model="textarea">
+            </el-input>
+        </div>
+        <!-- 组织机构代码证 begin -->
+        <div class="audit_tit" style="margin-top: 40px;border-top: 1px dashed #333;padding-top: 20px;">
+            <span>组织机构代码证</span>
+        </div>
+        <el-form-item label='组织机构代码'>
+            <span>{{supplierApplyData.name}}</span>
+        </el-form-item>
+        <el-form-item label='有效期(截止日)'>
+            <span>{{supplierApplyData.name}}</span>
+        </el-form-item>
+        <el-form-item label='组织机构代码证电子版'>
+            <el-upload
+                    action=""
+                    list-type="picture-card"
+                    :file-list="fileList2"
+                    :on-preview="handlePictureCardPreview"
+                    :on-remove="handleRemove">
+            </el-upload>
+        </el-form-item>
+        <div style="line-height:50px;background:#eee;">
+            <span style="margin-right: 50px;padding-left:30px;">审核结果</span>
+            <el-radio-group v-model="radio2">
+                <el-radio :label="1" style="margin-right:20px;">通过</el-radio>
+                <el-radio :label="2">驳回</el-radio>
+            </el-radio-group>
+            <el-input
+                    type="textarea"
+                    v-show="radio2==2"
+                    :rows="2"
+                    placeholder="请输入内容"
+                    v-model="textarea">
+            </el-input>
+        </div>
+        <!-- 税务登记证 begin -->
+        <div class="audit_tit" style="margin-top: 40px;border-top: 1px dashed #333;padding-top: 20px;">
+            <span>税务登记证</span>
+        </div>
+        <el-form-item label='纳税人性质'>
+            <span>{{supplierApplyData.name}}</span>
+        </el-form-item>
+        <el-form-item label='纳税人识别号'>
+            <span>{{supplierApplyData.name}}</span>
+        </el-form-item>
+        <el-form-item label='税务登记证电子版'>
+            <el-upload
+                    action=""
+                    list-type="picture-card"
+                    :file-list="fileList2"
+                    :on-preview="handlePictureCardPreview"
+                    :on-remove="handleRemove">
+            </el-upload>
+        </el-form-item>
+        <div style="line-height:50px;background:#eee;">
+            <span style="margin-right: 50px;padding-left:30px;">审核结果</span>
+            <el-radio-group v-model="radio2">
+                <el-radio :label="1" style="margin-right:20px;">通过</el-radio>
+                <el-radio :label="2">驳回</el-radio>
+            </el-radio-group>
+            <el-input
+                    type="textarea"
+                    v-show="radio2==2"
+                    :rows="2"
+                    placeholder="请输入内容"
+                    v-model="textarea">
+            </el-input>
+        </div>
+        <!-- 其他证件 begin -->
+        <div class="audit_tit" style="margin-top: 40px;border-top: 1px dashed #333;padding-top: 20px;">
+            <span>其他证件</span>
+        </div>
+        <el-form-item label='证件名称'>
+            <span>{{supplierApplyData.name}}</span>
+        </el-form-item>
+        <el-form-item label='有效期(截止日)'>
+            <span>{{supplierApplyData.name}}</span>
+        </el-form-item>
+        <el-form-item label='证件电子版'>
+            <el-upload
+                    action=""
+                    list-type="picture-card"
+                    :file-list="fileList2"
+                    :on-preview="handlePictureCardPreview"
+                    :on-remove="handleRemove">
+            </el-upload>
+        </el-form-item>
+        <div style="line-height:50px;background:#eee;">
+            <span style="margin-right: 50px;padding-left:30px;">审核结果</span>
+            <el-radio-group v-model="radio2">
+                <el-radio :label="1" style="margin-right:20px;">通过</el-radio>
+                <el-radio :label="2">驳回</el-radio>
+            </el-radio-group>
+            <el-input
+                    type="textarea"
+                    v-show="radio2==2"
+                    :rows="2"
+                    placeholder="请输入内容"
+                    v-model="textarea">
+            </el-input>
+        </div>
+    </el-form>
+    <div style="text-align: center;margin-top:30px;border-top: 1px dotted #333;padding-top: 50px;">
+        <el-button style="width:200px;">返回</el-button>
+        <el-button type="primary" style="width:200px;">提交</el-button>
+    </div>
+</div>
+<script type="text/javascript">
+    var app = new Vue({
+        el:'#aptitude',
+        data:{
+            dialogImageUrl:'',
+            dialogVisible:false,
+            radio2:'',
+            textarea:'',
+            fileList1:[{name: '', url: 'http://img15.3lian.com/2015/h1/280/d/5.jpg'}, {name: 'girl.jpeg', url: 'http://pic.jj20.com/up/allimg/1011/122216135T9/161222135T9-3.jpg'}],
+            fileList2:[{name:'',url:'http://img4.duitang.com/uploads/item/201112/20/20111220192402_mBuZj.thumb.700_0.jpg'}],
+            supplierApplyData:{
+                name:'云杉世界科技有限公司',
+            }
+        },
+        methods:{
+            handleRemove:function(file, fileList) {
+                console.log(file, fileList);
+            },
+            handlePictureCardPreview:function(file) {
+                this.dialogImageUrl = file.url;
+                this.dialogVisible = true;
+            }
+        }
+    })
+</script>
+
+</body>
+</html>

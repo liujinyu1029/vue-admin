@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+  <meta charset="UTF-8">
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-default/index.css">
+  <!-- 先引入 Vue -->
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <!-- 引入组件库 -->
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
+</head>
+<body>
+<style>
+    .tit{border-bottom:3px solid #1298B3;overflow: hidden;}
+    .tit h3{background:#1298B3;color:#fff;line-height: 40px;height: 40px;margin: 0;padding:0 15px;font-size: 16px;font-weight: normal;float:left;}
+    .tit a{float:right;border:1px solid rgba(204, 204, 204, 1);color:#666;padding:5px 10px;display:block;}
+    .tit a:hover{text-decoration: none;background:#d0d0d0}
+</style>
+<div class="tit">
+	<h3>供应商列表</h3>
+</div>
+<div id="suppliapp" style="margin-top:20px;">
+  <el-form :inline="true" :model="searchData" class="demo-form-inline">
+    <el-form-item label="供应商名称">
+      <el-input v-model="searchData.skuName" placeholder="请输入供应商名称"></el-input>
+    </el-form-item>
+    <el-form-item label="申报日期">
+      <el-date-picker
+        v-model="searchData.checkDate"
+        type="date"
+        placeholder="选择日期">
+      </el-date-picker>
+    </el-form-item>
+
+    <el-form-item>
+      <el-checkbox v-model="searchData.checked">全国</el-checkbox></el-form-item>
+    <el-form-item>
+      <el-button type="primary" @click="onSubmit">查询</el-button>
+    </el-form-item>
+  </el-form>
+
+  <!--列表 table-->
+  <el-table :data="formData" highlight-current-row v-loading="listLoading" style="width: 100%;">
+    <!-- 供应商名称 -->
+    <el-table-column prop="supplierName" label="供应商名称" width=""100 sortable></el-table-column>
+    <!-- 提交人 -->
+    <el-table-column prop="submitName" label="提交人" width="" sortable></el-table-column>
+    <!-- 提交时间 -->
+    <el-table-column prop="submitTime" label="提交时间" width="" sortable></el-table-column>
+
+    <!-- 操作 -->
+    <el-table-column label="操作" width="150">
+      <template scope="scope">
+        <el-button size="small" @click="handleDetails(scope.$index, scope.row)">详情</el-button>
+        <el-button type="danger" size="small" @click="handleModify(scope.$index, scope.row)">修改</el-button>
+      </template>
+    </el-table-column>
+  </el-table>
+
+  <!--工具条-->
+  <div class="block" style="text-align:right">
+    <el-pagination
+      layout="total,prev, pager, next"
+      :page-size="10"
+      :total="20"
+      @current-change="handleCurrentChange">
+    </el-pagination>
+  </div>
+
+</div>
+
+
+
+<script type="text/javascript">
+var temp_formData =[{
+          supplierName:'王大婶鸡蛋王大婶鸡蛋王大婶',
+          type:[{txt:'米面粮油'}],
+          status:'待审核',
+          submitName:'王小',
+          submitTime:'2010.11.1',
+        },{
+          supplierName:'王大婶鸡蛋王大婶鸡蛋王大婶',
+          type:[{txt:'米面粮油'}],
+          status:'待审核',
+          submitName:'王小',
+          submitTime:'2010.11.1',
+        },{
+          supplierName:'王大婶鸡蛋王大婶鸡蛋王大婶',
+          type:[{txt:'米面粮油'}],
+          status:'待审核',
+          submitName:'王小',
+          submitTime:'2010.11.1',
+        },{
+          supplierName:'王大婶鸡蛋王大婶鸡蛋王大婶',
+          type:[{txt:'米面粮油'}],
+          status:'待审核',
+          submitName:'王小',
+          submitTime:'2010.11.1',
+        }]
+
+  var suplist = new Vue({
+    el: '#suppliapp',
+    data(){
+      return({
+        listLoading: false,
+        // 表单数据
+        formData:[...temp_formData],
+        page:1,
+        // 查询条件数据
+        searchData:{
+          skuName:'',
+          checkDate:'',
+          status:'-1',
+          checked:false
+
+        }
+      })
+    },
+    methods: {
+      //性别显示转换
+      onSubmit: function () {
+        console.log(JSON.stringify(suplist.searchData));
+      },
+      //详情
+      handleDetails: function (index, row) {
+        this.editFormVisible = true;
+        this.editForm = Object.assign({}, row);
+      },
+      //修改
+      handleModify:function(index,row){
+          window.open('/supplier/apply/info',"_self")
+      },
+      handleCurrentChange:function(page){
+        this.page = page;
+
+      }
+    }
+
+  })
+</script>
+</body>
+</html>

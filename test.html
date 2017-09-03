@@ -1,0 +1,949 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="author" content="">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>美菜-自动下单管理系统</title>
+
+    <!-- 引入样式 -->
+     <link rel="stylesheet" type="text/css" href="http://new-srm.cx.test.yunshanmeicai.com/assets/css/bootstrap.css">
+     <link rel="stylesheet" type="text/css" href="http://new-srm.cx.test.yunshanmeicai.com/assets/css/new-srm.css">
+    <!-- 引入组件库 -->
+    <script type="text/javascript" src="http://new-srm.cx.test.yunshanmeicai.com/assets/js/vue.js"></script>
+    <script type="text/javascript" src="http://new-srm.cx.test.yunshanmeicai.com/assets/js/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="http://new-srm.cx.test.yunshanmeicai.com/assets/js/element-ui.min.js"></script> 
+    <script type="text/javascript" src="http://new-srm.cx.test.yunshanmeicai.com/assets/js/axios.min.js"></script>
+
+</head>
+
+<body>
+<div v-cloak id="srm-home">
+  <el-row>
+    <el-col :span="24" class="header">
+      <el-col :span="10" class="logo" :class="collapsed?'logo-collapse-width':'logo-width'">
+        {{sysName}}
+      </el-col>
+      <el-col :span="5">
+        <div class="tools" @click.prevent="collapse">
+          <i class="fa fa-align-justify"></i>
+        </div>
+      </el-col>
+      <el-col :span="9" class="userinfo">
+        <span class="user_name">
+          您好,{{userInfo.name}} ({{userInfo.role_name}})
+        </span>
+        <el-dropdown trigger="hover">
+            <span class="el-dropdown-link userinfo-inner">
+              {{userInfo.current_city_name}}
+              <i class="el-icon-caret-bottom el-icon--right"></i>
+          </span>
+          <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item @click.native="switchCity(city.id)" v-for="city in userInfo.own_cities" >
+                  {{city.name}}
+              </el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+        <a class="logout" href="/public/logout">
+            退出
+        </a>
+      </el-col>
+    </el-col>
+  </el-row>
+  <aside class="navbar-side" :class="collapsed ? 'menu-collapsed':'menu-expanded'">
+    <el-menu :default-active="pathname" class="el-menu-vertical-demo" unique-opened v-show="!collapsed"  @open="handleopen" @close="handleclose" @select="handleselect">
+      <template v-for="(item , index) in menus" v-if="!item.hidden">
+        <el-submenu :index="index+''" v-if="!item.leaf">
+            <template slot="title">
+              <i :class="item.iconCls"></i>
+              {{item.name}}
+            </template>
+            <el-menu-item v-for="child in item.children" :index="child.path" v-if="!child.hidden">
+              {{child.name}}
+            </el-menu-item>
+            </el-submenu>
+            <el-menu-item v-if="item.leaf && item.children.length>0" :index="item.children[0].path">
+                <i :class="item.iconCls"></i>
+                {{item.children[0].name}}
+            </el-menu-item>
+      </template>
+    </el-menu>
+    <!--导航菜单-折叠后-->
+    <ul class="el-menu el-menu-vertical-demo collapsed" v-show="collapsed" ref="menuCollapsed">
+      <li v-for="(item,index) in menus" v-if="!item.hidden" class="el-submenu item">
+        <template v-if="!item.leaf">
+          <div class="el-submenu__title" style="padding-left: 20px;" @mouseover="showMenu(index,true)" @mouseout="showMenu(index,false)"><i :class="item.iconCls"></i></div>
+          <ul class="el-menu submenu" :class="'submenu-hook-'+index" @mouseover="showMenu(index,true)" @mouseout="showMenu(index,false)">
+            <li v-for="child in item.children" v-if="!child.hidden" class="el-menu-item" style="padding-left: 40px;" :class="pathname==child.path?'is-active':''">{{child.name}}</li>
+          </ul>
+        </template>
+        <template v-else>
+          <li class="el-submenu">
+            <div class="el-submenu__title el-menu-item" style="padding-left: 20px;height: 56px;line-height: 56px;padding: 0 20px;" :class="pathname==item.children[0].path?'is-active':''" ><i :class="item.iconCls"></i></div>
+          </li>
+        </template>
+      </li>
+    </ul>
+  </aside>
+</div>
+<div class="page-wrapper">
+<style>
+.vertical-center{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.mt20{marrgin-top:20px;}
+.pb20{padding-bottom:20px;}
+.pb50{padding-bottom:50px;}
+.pt50{padding-top:50px;}
+.certificatetype .el-radio{width:100px;}
+label{font-weight: normal;}
+.el-form-item__label{font-weight: bold;}
+</style>
+
+<div v-cloak id="register">
+    <div v-cloak class="">
+        <el-steps v-cloak :center="true" space='15%' :align-center=false :active="active" finish-status="success">
+            <el-step v-cloak title="供应商账号"></el-step>
+            <el-step v-cloak title="基本信息"></el-step>
+            <el-step v-cloak title="合作信息"></el-step>
+            <el-step v-cloak title="资质信息"></el-step>
+            <el-step v-cloak title="其他证件"></el-step>
+            <el-step v-cloak title="结账信息"></el-step>
+            <el-step v-cloak title="提交审核"></el-step>
+        </el-steps>
+    </div>
+    <div v-cloak class="top_line">
+        <div  v-show="active==0" class="pt50">
+            <el-row v-cloak>
+                <el-col :span="12" :offset="5">
+                    <el-form ref="register_dom_0" :rules="rules" :model="form_step_0" label-width="125px">
+                        <el-form-item  label="手机号" prop="phone">
+                            <el-input v-model="form_step_0.phone" auto-complete="off"></el-input>
+                        </el-form-item>
+                        <el-form-item  label="确认手机号" prop="phone1">
+                            <el-input  v-model="form_step_0.phone1" auto-complete="off"></el-input>
+                        </el-form-item>
+                    </el-form>
+                </el-col>
+            </el-row>
+        </div>
+        <div v-cloak v-show="active==1" class="pt50">
+            <el-row>
+                <el-col :offset="5" :span="12">
+                    <el-form ref="register_dom_1" :rules="rules" :model="form_step_1" label-width="125px">
+                        <el-form-item  label="联系人" prop='contactPerson'>
+                            <el-input  v-model="form_step_1.contactPerson"></el-input>
+                        </el-form-item>
+                        <el-form-item  label="联系电话" prop="contactPhone">
+                            <el-input  v-model.number="form_step_1.contactPhone"></el-input>
+                        </el-form-item>
+                        <el-form-item  label="邮箱" prop="email">
+                            <el-input  v-model="form_step_1.email"></el-input>
+                        </el-form-item>
+                        <el-form-item  label="地址" prop="address">
+                            <el-input  v-model="form_step_1.address"></el-input>
+                        </el-form-item>
+                    </el-form>
+                </el-col>
+            </el-row>
+        </div>
+        <div v-cloak v-show="active==2">
+            <el-row>
+                <el-col :offset="1" :span="23">
+                    <el-form ref="register_dom_2" :rules="rules" :model="form_step_2" label-width="125px">
+                        <h3>合作信息</h3>
+                        <el-row v-for="(item ,index) in form_step_2.coopInfo" style="margin:10px 10px 10px 0">
+                            <el-col style="border: 1px solid #bbb;border-radius: 5px;width:600px">
+                                <el-form-item label='一级分类' prop="class1" style="margin-top: 10px;">
+                                    <el-radio-group v-model="item.class1">
+                                        <el-radio v-for='(p,i) in form_step_2.class_list' :label='i'>{{p}}</el-radio>
+                                    </el-radio-group>
+                                </el-form-item>
+                                <el-form-item label='采购专员' prop="purchaser">
+                                    <el-select filterable clearable v-model="item.purchaser" placeholder="请选择">
+                                        <el-option v-for="(p,i) in form_step_2.purchasers" :label="p" :value="i"></el-option>
+                                    </el-select>
+                                </el-form-item>
+                                <el-form-item>
+                                    <el-button @click="removeDomain(index)" v-show="index!=0" size="small" icon="delete">删除</el-button>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-form-item>
+                            <el-button type="primary" @click='addDomain'><i class="el-icon-plus"></i> 继续添加</el-button>
+                        </el-form-item>
+                        <h3>其他信息</h3>
+                        <el-form-item label="配送方式" prop="deliveryType">
+                            <el-radio-group v-model="form_step_2.deliveryType">
+                                <el-radio label="1">自营</el-radio>
+                            </el-radio-group>
+                        </el-form-item>
+                        <el-form-item label="分拣客户端" prop="useSortingApp">
+                            <el-radio-group v-model="form_step_2.useSortingApp">
+                                <el-radio label="1">使用</el-radio>
+                                <el-radio label="2">不使用</el-radio>
+                            </el-radio-group>
+                        </el-form-item>
+                    </el-form>
+                </el-col>
+            </el-row>
+        </div>
+        <div v-cloak v-show="active==3">
+            <el-row>
+                <el-col :span="21" :offset="1">
+                    <el-form ref="register_dom_3" :rules="rules"  :model="form_step_3" label-width="150px" >
+                        <h3 style='padding-top: 20px;'>执照类型</h3>
+                        <el-form-item label="">
+                            <el-radio-group v-model="form_step_3.licenseType">
+                                <el-radio label="1">普通执照</el-radio>
+                                <el-radio label="2">三证合一</el-radio>
+                            </el-radio-group>
+                        </el-form-item>
+                        <!--  营业执照信息 -->
+                        <h3 style='border-top: 1px dashed #333;padding-top: 20px;'>营业执照信息</h3>
+                        <el-form-item label="公司名称" prop="companyName">
+                            <el-input v-model="form_step_3.companyName" placeholder="请输入公司名称" size="small" style="width:300px;"></el-input>
+                        </el-form-item>
+                        <el-form-item label="公司类型" prop="companyType">
+                            <el-select v-model="form_step_3.companyType" placeholder="请选择">
+                                <el-option label="虚拟供应商" value="1"></el-option>
+                                <el-option label="内部供应商" value="2"></el-option>
+                                <el-option label="基地生产商" value="3"></el-option>
+                                <el-option label="代理商" value="4"></el-option>
+                                <el-option label="经销商" value="5"></el-option>
+                                <el-option label="批发商" value="6"></el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="是否源头" prop="isSource">
+                            <el-radio-group v-model="form_step_3.isSource" >
+                                <el-radio label="1" style="margin-right: 0px;">是</el-radio>
+                                <el-radio label="2">否</el-radio>
+                            </el-radio-group>
+                        </el-form-item>
+                        <el-form-item label="营业执照编号" prop="busLicenNum">
+                            <el-input v-model="form_step_3.busLicenNum" placeholder="请按照营业执照上的编号填写" size="small" style="width:300px;"></el-input>
+                        </el-form-item>
+                        <el-form-item label="注册地址" prop="regisAddr">
+                            <el-input v-model="form_step_3.regisAddr" placeholder="请按照营业执照上的详细地址填写" size="small" style="width:300px;"></el-input>
+                        </el-form-item>
+                        <el-form-item label="有效期(截止日)" prop="effecDate">
+                            <el-date-picker
+                                v-model="form_step_3.effecDate"
+                                type="date"
+                                placeholder="有效期(截止日">
+                            </el-date-picker>
+                        </el-form-item>
+                        <el-form-item label="营业执照电子版" prop="upLoad">
+                            <span style="color:#aaa">请上传扫描的电子版且必须加盖企业彩色公章</span>
+                            <el-upload
+                                    action=""
+                                    list-type="picture-card"
+                                    :on-preview="handlePictureCardPreview"
+                                    :on-remove="handleRemove">
+                                <i class="el-icon-plus"></i>
+                            </el-upload>
+                            <el-dialog v-model="dialogVisible" size="tiny">
+                                <img width="100%" :src="dialogImageUrl" alt="">
+                            </el-dialog>
+                            <span style="color:#aaa">文件大小2MB以内，支持JPG、BMP、JPEG、PNG格式</span>
+                        </el-form-item>
+                        <el-form-item label="法人姓名" prop="legalPersonName">
+                            <el-input v-model="form_step_3.legalPersonName" placeholder="请按照营业执照上的编号填写" size="small" style="width:300px;"></el-input>
+                        </el-form-item>
+                        <el-form-item label="法人身份证号" prop="legalPersonId">
+                            <el-input v-model="form_step_3.legalPersonId" placeholder="请输入身份证号" size="small" style="width:300px;"></el-input>
+                        </el-form-item>
+                        <el-form-item label="身份证电子版" prop="upLoad1">
+                            <span style="color:#aaa">身份证要求正反两面且必须加盖开店公司彩色公章</span>
+                            <el-upload
+                                    action=""
+                                    list-type="picture-card"
+                                    :on-preview="handlePictureCardPreview
+                                    :on-remove="handleRemove">
+                                <i class="el-icon-plus"></i>
+                            </el-upload>
+                            <el-dialog v-model="dialogVisible" size="tiny">
+                                <img width="100%" :src="dialogImageUrl" alt="">
+                            </el-dialog>
+                            <span style="color:#aaa">文件大小2MB以内，支持JPG、BMP、JPEG、PNG格式</span>
+                        </el-form-item>
+
+                        <div v-show="form_step_3.licenseType==1" >
+                            <!-- 组织机构信息 -->
+                            <h3 style='border-top: 1px dashed #333;padding-top: 20px;'>组织机构信息</h3>
+                            <el-form-item label="组织机构代码" prop="organizationCode">
+                                <el-input v-model="form_step_3.organizationCode" placeholder='请按组织机构代码证上的代码填写,不能省"--"' size="small" style="width:300px;"></el-input>
+                            </el-form-item>
+                            <el-form-item label="有效期(截止日)" prop="effecDate1">
+                                <el-date-picker
+                                        v-model="form_step_3.effecDate1"
+                                        type="date"
+                                        placeholder="有效期(截止日">
+                                </el-date-picker>
+                            </el-form-item>
+                            <el-form-item label="营业执照电子版" prop="upLoad2">
+                                <span style="color:#aaa">请上传扫描的电子版且必须加盖企业彩色公章</span>
+                                <el-upload
+                                        action=""
+                                        list-type="picture-card"
+                                        :on-preview="handlePictureCardPreview
+                                        :on-remove="handleRemove">
+                                    <i class="el-icon-plus"></i>
+                                </el-upload>
+                                <el-dialog v-model="dialogVisible" size="tiny">
+                                    <img width="100%" :src="dialogImageUrl" alt="">
+                                </el-dialog>
+                                <span style="color:#aaa">文件大小2MB以内，支持JPG、BMP、JPEG、PNG格式</span>
+                            </el-form-item>
+
+                            <!-- 税务登记信息 -->
+                            <h3 style='border-top: 1px dashed #333;padding-top: 20px;'>税务登记信息</h3>
+                            <el-form-item label="纳税性质" prop="taxNature">
+                                <el-select v-model="form_step_3.taxNature" placeholder="请选择">
+                                    <el-option label="小规模纳税人" value="1"></el-option>
+                                    <el-option label="农民" value="2"></el-option>
+                                    <el-option label="农民专业合作社" value="3"></el-option>
+                                    <el-option label="其他个人" value="4"></el-option>
+                                    <el-option label="一般纳税人" value="5"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="纳税人识别号" prop="taxpayerId">
+                                <el-input v-model="form_step_3.taxpayerId" placeholder="请输入纳税人识别号" size="small" style="width:300px;"></el-input>
+                            </el-form-item>
+                            <el-form-item label="税务登记证电子版" prop="taxRegCerEdition">
+                                <span style="color:#aaa">请上传扫描的电子版且必须加盖企业彩色公章</span>
+                                <el-upload
+                                        action=""
+                                        list-type="picture-card"
+                                        :on-preview="handlePictureCardPreview
+                                        :on-remove="handleRemove">
+                                    <i class="el-icon-plus"></i>
+                                </el-upload>
+                                <el-dialog v-model="dialogVisible" size="tiny">
+                                    <img width="100%" :src="dialogImageUrl" alt="">
+                                </el-dialog>
+                                <span style="color:#aaa">文件大小2MB以内，支持JPG、BMP、JPEG、PNG格式</span>
+                            </el-form-item>
+                            <el-form-item>
+                                <el-button type="primary" @click="submitForm('form')">提交审核</el-button>
+                                <el-button @click="resetForm('register_dom_3')">重置</el-button>
+                            </el-form-item>
+                        </div>
+                    </el-form>
+                </el-col>
+            </el-row>
+        </div>
+        <div v-cloak v-show="active==4">
+            <el-row>
+                <el-col :span="21" :offset="1">
+                    <el-form ref="register_dom_4" :rules="rules" :model="form_step_4" label-width="150px" >
+                        <h3 style='padding-top: 20px;'>证件类型</h3>
+                        <el-form-item label="证件类型">
+                            <el-checkbox-group v-model='form_step_4.certificateType' class='certificatetype'>
+                                <el-checkbox v-for="item in certificateTypeList" :label="item.label" :key='item.value'></el-checkbox>
+                            </el-checkbox-group>
+                        </el-form-item>
+                        <div v-for='str in form_step_4.certificateType' style="border-top:1px dashed #333;font-size: 20px;padding-top:20px;">
+                            <p>
+                                <span>{{str}}</span>
+                                <el-button @click="removeRegister(str)" size="small" icon="delete" style='float: right;'>删除</el-button>
+                            </p>
+                            <el-form-item label="有效期(截止日)">
+                                <el-date-picker
+                                        v-model="form_step_4.effecDate3"
+                                        type="date"
+                                        placeholder="有效期(截止日">
+                                </el-date-picker>
+                            </el-form-item>
+                            <el-form-item label="证件电子版">
+                                <el-upload
+                                        action=""
+                                        list-type="picture-card"
+                                        :on-preview="handlePictureCardPreview"
+                                        :on-remove="handleRemove">
+                                    <i class="el-icon-plus"></i>
+                                </el-upload>
+                                <el-dialog v-model="dialogVisible" size="tiny">
+                                    <img width="100%" :src="dialogImageUrl" alt="">
+                                </el-dialog>
+                            </el-form-item>
+                        </div>
+                    </el-form>
+                </el-col>
+            </el-row>
+        </div>
+        <div v-cloak v-show="active==5">
+            <el-row>
+                <el-col :span="21" :offset="1">
+                    <el-form ref="register_dom_5" :rules="rules" :model="form_step_5" label-width="150px" >
+                        <h3 style='padding-top: 20px;'>结算信息</h3>
+                        <el-form-item label="发票类型">
+                            <el-radio-group v-model="form_step_5.invoiceType">
+                                <el-radio label="1">专用发票</el-radio>
+                                <el-radio label="2">普通发票</el-radio>
+                                <el-radio label="3">无发票</el-radio>
+                            </el-radio-group>
+                        </el-form-item>
+                        <el-form-item label="支付方式">
+                            <el-radio-group v-model="form_step_5.payWay">
+                                <el-radio label="2">转账</el-radio>
+                            </el-radio-group>
+                        </el-form-item>
+                        <el-form-item label="是否预付">
+                            <el-switch v-model="form_step_5.isPrepaid" on-text='是' off-text='否'></el-switch>
+                        </el-form-item>
+                        <el-form-item label="账期起算日">
+                            <el-radio-group v-model="form_step_5.accountPeriodStart">
+                                <el-radio label="1">入库日期</el-radio>
+                                <el-radio label="2">订单日期</el-radio>
+                            </el-radio-group>
+                        </el-form-item>
+                        <el-form-item label="性质">
+                            <el-radio-group v-model="form_step_5.nature">
+                                <el-radio label="1">个人</el-radio>
+                                <el-radio label="2">个体工商户</el-radio>
+                                <el-radio label="3">企业法人</el-radio>
+                            </el-radio-group>
+                        </el-form-item>
+                        <el-form-item label="账期天数">
+                            <el-input v-model="form_step_5.accountDay" auto-complete="off" placeholder="请输入天数" style="width:390px"></el-input>
+                        </el-form-item>
+                        <el-form-item label="延期付款天数">
+                            <el-input v-model="form_step_5.accountDelayDay" auto-complete="off" placeholder="请输入天数" style="width:390px"></el-input>
+                        </el-form-item>
+                        <el-form-item label="" style="border-top: 1px dashed #333;">
+                        </el-form-item>
+                        <h3 style='padding-bottom: 20px;'>开户许可信息</h3>
+                        <el-form-item label="开户名">
+                            <el-input v-model="form_step_5.accountName" auto-complete="off" placeholder="请输入内容" style="width:390px"></el-input>
+                        </el-form-item>
+                        <el-form-item label="开户行行号">
+                            <el-input v-model="form_step_5.accountBankNo" auto-complete="off" placeholder="请输入内容" style="width:390px"></el-input>
+                        </el-form-item>
+                        <el-form-item label="开户行名称">
+                            <el-input v-model="form_step_5.accountBankName" auto-complete="off" placeholder="请输入内容" style="width:390px"></el-input>
+                        </el-form-item>
+                        <el-form-item label="账号">
+                            <el-input v-model="form_step_5.account" auto-complete="off" placeholder="请输入内容" style="width:390px"></el-input>
+                        </el-form-item>
+                        <el-form-item label="银行">
+                            <el-select filterable clearable v-model="form_step_5.fBank" placeholder="请选择">
+                                <el-option label="111" value="1"></el-option>
+                                <el-option label="222" value="2"></el-option>
+                                <el-option label="333" value="3"></el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="省份">
+                            <el-select filterable clearable v-model="form_step_5.province" placeholder="请选择">
+                                <el-option label="111" value="1"></el-option>
+                                <el-option label="222" value="2"></el-option>
+                                <el-option label="333" value="3"></el-option>
+                            </el-select>
+                            <el-select filterable clearable v-model="form_step_5.status" placeholder="请选择">
+                                <el-option label="111" value="1"></el-option>
+                                <el-option label="222" value="2"></el-option>
+                                <el-option label="333" value="3"></el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="开户许可证电子版">
+                            <span style="color:#aaa">请上传扫描的电子版且必须加盖企业彩色公章</span>
+                            <el-upload
+                                    action=""
+                                    list-type="picture-card"
+                                    :on-preview="handlePictureCardPreview"
+                                    :on-remove="handleRemove">
+                                <i class="el-icon-plus"></i>
+                            </el-upload>
+                            <el-dialog v-model="dialogVisible" size="tiny">
+                                <img width="100%" :src="dialogImageUrl" alt="">
+                            </el-dialog>
+                            <span style="color:#aaa">文件大小2MB以内，支持JPG、BMP、JPEG、PNG格式</span>
+                            <br/>
+                            <el-form-item >
+                                <el-checkbox v-model='form_step_5.isPrivate'>对私</el-checkbox>
+                            </el-form-item>
+                        </el-form-item>
+                    </el-form>
+                </el-col>
+            </el-row>
+        </div>
+        <div v-cloak v-show="active==6">
+            <el-row>
+                <el-col :span=24 style="text-align: center;">
+                    <el-form ref="register_dom_6" :rules="rules" :model="registerData" label-width="150px" >
+                        <h2 style="margin: 100px auto;">填写成功，请提交！</h2>
+                    </el-form>
+                </el-col>
+            </el-row>
+        </div>
+        <div v-cloak v-show="active==7">
+            <el-row>
+                <el-col :span=24 style="text-align: center;">
+                    <el-form ref="register_dom_6" :rules="rules" :model="registerData" label-width="150px" >
+                        <h2 style="margin: 100px auto;"><i style="color:green;" class="el-icon-circle-check"></i>提交成功！等待审核！</h2>
+                    </el-form>
+                </el-col>
+            </el-row>
+        </div>
+    </div>
+    <div v-cloak class="footer-btn">
+        <div style="float: right;">
+            <el-button @click="lastStep" :disabled="active==0" type="primary" icon="arrow-left">上一步</el-button>
+            <el-button @click="nextStep" type="primary" v-show="active<=6">{{active < 6 ? '下一步' : '提交'}}<i class="el-icon-arrow-right el-icon--right"></i></el-button>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    Array.prototype.remove = function(val) {
+        var index = this.indexOf(val);
+        if (index > -1) {
+            this.splice(index, 1);
+        }
+    };
+    var vapp = new Vue({
+        el:'#register',
+        created:function() {
+
+        },
+        data(){
+            //验证规则 手机号验证
+            var validate_phone = (rule, value, callback) => {
+                if (!value) {
+                    return callback(new Error('请输入供应商的注册手机号'));
+                }
+                if (isNaN(value)) {
+                    callback(new Error('请输入正确手机号,手机号为数字'));
+                } else {
+                    if (value > 99999999999 || value <10000000000) {
+                        callback(new Error('请输入正确11位手机号'));
+                    } else {
+                        callback();
+                    }
+                }
+            };
+            //验证规则 手机号验证 第二次输入一致
+            var validate_phone1 = (rule, value, callback) => {
+                if (value === '') {
+                    callback(new Error('请再次输入供应商的注册手机号'));
+                } else if (value !== this.registerData.phone) {
+                    callback(new Error('两次输入的手机号不一致!'));
+                } else {
+                    callback();
+                }
+            };
+            //营业执照编号 18位及以内数字或英文，
+            var validate_busLicenNum = (rule, value, callback) => {
+                if (!value) {
+                    return callback(new Error('请输入营业执照上的编号'));
+                }
+                const reg = new RegExp('[^a-zA-Z0-9]+');
+                if (value.length>18 || reg.test(value)) {
+                    callback(new Error('营业执照编号是18位及以内数字或英文'));
+                } else {
+                    callback();
+                }
+            };
+            //法人姓名 10位以内汉字或英文
+            var validate_legalPersonName = (rule, value, callback) => {
+                if (!value) {
+                    return callback(new Error('请输入法人姓名'));
+                }
+                const reg = new RegExp(/[^\u4E00-\u9FA5a-zA-Z]+/);
+                if (value.length>10 || reg.test(value)) {
+                    callback(new Error('法人姓名是10位及以汉字或英文'));
+                } else {
+                    callback();
+                }
+            };
+            //法人姓名 10位以内汉字或英文
+            var validate_legalPersonName = (rule, value, callback) => {
+                if (!value) {
+                    return callback(new Error('请输入法人姓名'));
+                }
+                const reg = new RegExp(/[^\u4E00-\u9FA5a-zA-Z]+/);
+                if (value.length>10 || reg.test(value)) {
+                    callback(new Error('法人姓名是10位及以汉字或英文'));
+                } else {
+                    callback();
+                }
+            };
+            //身份证号 18位及以内数字或英文，
+            var validate_legalPersonId = (rule, value, callback) => {
+                if (!value) {
+                    return callback(new Error('请输入法人身份证号'));
+                }
+                const reg = new RegExp('[^xX0-9]+');
+                if (value.length>18 || reg.test(value)) {
+                    callback(new Error('身份证号是22位及以内数字或字母x'));
+                } else {
+                    callback();
+                }
+            };
+            //纳税人标识号 20位以内汉字或英文
+            var validate_taxpayerId = (rule, value, callback) => {
+                if (!value) {
+                    return callback(new Error('请输入纳税人标识号'));
+                }
+                const reg = new RegExp(/[^\u4E00-\u9FA5a-zA-Z]+/);
+                if (value.length>20 || reg.test(value)) {
+                    callback(new Error('纳税人标识号是20位及以汉字或英文'));
+                } else {
+                    callback();
+                }
+            };
+
+            const registerDomeList = [
+                'register_dom_0','register_dom_1','register_dom_2',
+                'register_dom_3','register_dom_4','register_dom_5','register_dom_6'];
+            return {
+                active:5,
+                registerDomeList:registerDomeList.slice(0),
+                dialogImageUrl:'',
+                dialogVisible:false,
+                certificateTypeList:[{
+                    value:'1',
+                    label:'食品流通许可证（食品经营许可证）'
+                },{
+                    value:'2',
+                    label:'工业产品许可证'
+                },{
+                    value:'3',
+                    label:'消毒产品企业卫生许可证'
+                },{
+                    value:'4',
+                    label:'餐饮服务许可证'
+                },{
+                    value:'5',
+                    label:'屠宰许可证'
+                },{
+                    value:'6',
+                    label:'生产许可证'
+                },{
+                    value:'7',
+                    label:'酒类流通备案'
+                },{
+                    value:'8',
+                    label:'动物防疫条件合格证'
+                },{
+                    value:'9',
+                    label:'其他证件'
+                }],
+                form_step_0:{
+                    phone:'',
+                    phone1:''
+                },
+                form_step_1:{
+                    contactPerson:'',//联系人
+                    contactPhone:'',//联系电话
+                    email:'',       //邮箱
+                    address:'',     //地址
+                },
+                form_step_2:{
+                    class_list:['米面粮油','家禽肉类','鸡蛋鸭蛋','海鲜鱼产'],
+                    purchasers:['采购经理','采购主管','采购员'],
+                    coopInfo:[{class1:'',purchaser:''}],//合作信息列表
+                    deliveryType:'1',//配送方式
+                    useSortingApp:'',//是否使用分拣客户端
+                },
+                form_step_3:{
+                    licenseType:'1',
+                    companyName:'',
+                    companyType:'',
+                    isSource:'',
+                    busLicenNum:'',
+                    regisAddr:'',
+                    effecDate:'',
+                    legalPersonName:'',
+                    legalPersonId:'',
+
+                    organizationCode:'',
+                    effecDate1:'',
+
+                    taxNature:'',
+                    taxpayerId:'',
+                    effecDate2:'',
+                },
+                form_step_4:{
+                    certificateType:[],
+                    effecDate3:'',
+                },
+                form_step_5:{
+                    invoiceType:'', //1,发票类型 1：专用发票2：普通发票；3：无
+                    payWay:2,//结账支付方式 1:现金；2：转账；3：支票 目前支持转账
+                    isPrepaid:true,//1,是否预付
+                    accountPeriodStart:'',//1,账期起算日：1、订单日期；2、入库日期。 默认入库日期
+                    nature:'',//1,结账性质 1:个人；2：个体商户；3：企业法人
+                    accountDay:'',//账期天数
+                    accountDelayDay:'',//延期付款天数
+                    //开户信息
+                    account: "zhanghao",//账号
+                    accountName: "fox",//开户名
+                    accountBankName: "招行",//开户行名称
+                    accountBankNo: "85347583475",//开户行行号
+                    accountPic: "fsfsfsfsf",//开户许可证图片地址
+                    fBank: "jianhang",//银行
+                    province: "beijing",
+                    isPrivate: "1"//对私
+                },
+                
+                rules:{
+                    //action1
+                    phone:[{ required: true,validator: validate_phone, trigger: 'blur,change' }],
+                    phone1:[{required: true,validator: validate_phone1, trigger: 'blur,change' }],
+                    //aciton2 联系人
+                    contactPerson:[
+                        { required: true,message: '请输入联系人姓名'},
+                        { max:10,type:'string', message: '长度为10个字符以内'}
+                    ],
+                    //联系电话
+                    contactPhone:[
+                        { required: true, message: '请输入联系人电话'},
+                        {type: 'number',min:10000000000,max:99999999999,message: '请输入正确电话号码'}
+                    ],
+                    email:[{type: 'email', message: '请输入正确邮箱地址'}],
+                    address:[
+                        {required: false, message: '请输入地址'},
+                        {max:20,type:'string', message: '长度为20个字符以内'}
+                    ],
+                    class1:[{ required: true,message: '请选择一级分类'}],
+                    purchaser:[{ required: true,message: '请选择采购专员'}],
+                    deliveryType:[{ required: true,message: '请选择配送方式'}],
+                    useSortingApp:[{ required: true,message: '请选择分练客户端'}],
+                    //action3
+                    companyName: [
+                        { required: true, message: '请输入公司名称' },
+                        { max:20,type:'string', message: '长度为20个字符以内'}
+                    ],
+                    companyType: [
+                        { required: true, message: '请选择公司类型' }
+                    ],
+                    isSource: [
+                        { required: true, message: '请选择是否源头' }
+                    ],
+                    busLicenNum: [//营业执照编号
+                        { required: true,validator: validate_busLicenNum }
+                    ],
+                    legalPersonName: [//法人姓名
+                        { required: true,validator: validate_legalPersonName }
+                    ],
+                    regisAddr: [
+                        { required: true, message: '请输入注册地址' }
+                    ],
+                    effecDate: [
+                        { type: 'date', required: true, message: '请选择日期' }
+                    ],
+                    effecDate1: [
+                        { type: 'date', required: true, message: '请选择日期' }
+                    ],
+                    effecDate2: [
+                        { type: 'date', required: true, message: '请选择日期' }
+                    ],
+                    legalPersonId: [//身份证号
+                        { required: true,validator:validate_legalPersonId}
+                    ],
+                    organizationCode: [
+                        { required: true, message: '请填写组织机构代码'}
+                    ],
+                    taxNature: [
+                        { required: true, message: '请选择纳税性质'}
+                    ],
+                    taxpayerId: [//纳税人识别号
+                        { required: true,validator:validate_taxpayerId}
+                    ],
+                    taxRegCerEdition: [
+                        { required: true, message: '请上传图片', trigger: 'blur' }
+                    ],
+                    upLoad: [
+                        { required: true, message: '请上传图片', trigger: 'blur' }
+                    ],
+                    upLoad1: [
+                        { required: true, message: '请上传图片', trigger: 'blur' }
+                    ],
+                    upLoad2: [
+                        { required: true, message: '请上传图片', trigger: 'blur' }
+                    ],
+                }
+            }
+        },
+        methods:{
+            lastStep:function() { //上一步
+                if (this.active-- <= 0) this.active = 0;
+            },
+            nextStep:function() { //下一步
+                var refs = this.$refs;
+                // 验证表单
+                refs[this.registerDomeList[this.active]].validate(valid => {
+                    if (valid && this.active<7) {
+                        return this.active ++;
+                    } else {
+                        return false;
+                    }
+                });
+            },
+            handleAvatarScucess:function(res, file){
+                console.log(this);
+                if (res.ret != -1){
+                    this.registerData.qualify.biz.bizPic = URL.createObjectURL(file.raw);
+                }else {
+                    this.$message.error(res.msg);
+                }
+            },
+            // 3--合作信息
+            addDomain:function() { //添加合作信息
+                this.form_step_2.coopInfo.push({
+                    class1:'',
+                    purchaser:''
+                })
+            },
+            removeDomain:function(index) { //删除合同
+                this.form_step_2.coopInfo.splice(index,1)
+                
+            },
+            resetForm:function(formName) {
+                this.$refs[formName].resetFields();
+            },
+            handleRemove:function(file, fileList) {
+                console.log(file, fileList);
+            },
+            handlePictureCardPreview:function(file) {
+                this.dialogImageUrl = file.url;
+                this.dialogVisible = true;
+            },
+            handlePictureCardPreview1:function(file) {
+                this.form.dialogImageUrl1 = file.url;
+                this.dialogVisible1 = true;
+            },
+            handlePictureCardPreview2:function(file) {
+                this.form.dialogImageUrl2 = file.url;
+                this.dialogVisible2 = true;
+            },
+            handlePictureCardPreview3:function(file) {
+                this.form.dialogImageUrl3 = file.url;
+                this.dialogVisible3 = true;
+            },
+            handlePictureCardPreview4:function(file) {
+                this.form.dialogImageUrl4 = file.url;
+                this.dialogVisible4 = true;
+            },
+            removeRegister:function(str){
+                this.form_step_4.certificateType.remove(str)
+            }
+        }
+    })
+</script>
+</div>
+
+<script type="text/javascript">
+    var app = new Vue({
+        el: '#srm-home',
+        created: function() {
+            this.getUserInfo();
+        },
+        data: {
+            sysName:'供应商管理系统',
+            collapsed:false,
+            userInfo:{},
+            pathname:window.location.pathname,
+            menus:[
+              {
+                  path: '/',
+                  name: '',
+                  iconCls: 'fa fa-address-card',
+                  leaf: true,//只有一个节点
+                  children: [
+                      { path: '/', name: '首页' }
+                  ]
+              },
+              {
+                  path: '/',
+                  name: '供应商产品库',
+                  iconCls: 'el-icon-message',
+                  children: [
+                      { path: '/supplierEval/siEval',  name: '竞标审核'}
+                  ]
+              },
+              // {
+              //     path: '/',
+              //     name: '供应商管理',
+              //     iconCls: 'el-icon-message',
+              //     children: [
+              //         { path: '/supplier/register/index',  name: '注册供应商'},
+              //         { path: '/supplier/supplier',  name: '信息维护' }
+              //     ]
+              // },
+              {
+                  path: '/',
+                  name: '供应商申报',
+                  iconCls: 'el-icon-message',
+                  children: [
+                      { path: '/supplier/apply/index',  name: '供应商申报'},
+//                      { path: '/supplier/apply/addindex',  name: '新供应商申报' },
+                      { path: '/supplier/audit/index',  name: '供应商审核' }
+                  ]
+              },
+              {
+                  path: '/',
+                  name: '供应商档案',
+                  iconCls: 'el-icon-message',
+                  children: [
+                      { path: '/supplier/apply/',  name: '供应商档案管理'}
+                  ]
+              },
+              {
+                  path: '/',
+                  name: '',
+                  iconCls: '',
+                  leaf: true,//只有一个节点
+                  children: [
+                      { path: '/',  name: '供应商账号维护'}
+                  ]
+              }
+            ],
+        },
+        methods: {
+            onSubmit:function() {
+
+            },
+            handleopen:function () {
+
+            },
+            handleclose:function() {
+
+            },
+            handleselect: function (a, b) {
+                location.href = a;
+            },
+            //折叠导航栏
+            collapse:function(){
+            },
+            showMenu:function(i,status){
+                var index = 'submenu-hook-' + i;
+                var el = this.$refs.menuCollapsed.getElementsByClassName(index);
+                el[0].style.display==status?'block':'none';
+            },
+            getUserInfo:function() {
+                var _this = this;
+                //获取用户相关信息
+              axios.post('/public/getUserInfo').then(function(response){
+                if (response.data.ret == 1) {
+                   _this.userInfo = response.data.data;
+                };
+              }).catch(function(err){
+                  _this.$message.error('错了哦，这是一条错误消息');
+              });
+            },
+            switchCity:function (cityId) {
+                location.href='/public/switchCity?cityId=' + cityId;
+            }
+        },
+    })
+</script>
+
+</body>
+</html>
+

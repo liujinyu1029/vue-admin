@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <meta charset="UTF-8">
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-default/index.css">
+  <!-- 先引入 Vue -->
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <!-- 引入组件库 -->
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+</head>
+<body>
+
+<div id="si_eval" >
+  <el-form :inline="true" :model="searchData" class="demo-form-inline">
+    <el-form-item label="供应商名称">
+      <el-input v-model="searchData.skuName" placeholder="请输入供应商名称"></el-input>
+    </el-form-item>
+    <el-form-item label="申报日期">
+      <el-date-picker
+        v-model="searchData.checkDate"
+        type="date"
+        placeholder="选择日期">
+      </el-date-picker>
+    </el-form-item>
+    <el-form-item label="状态">
+      <el-select v-model="searchData.status" placeholder="请选择">
+        <el-option label="资质审核中" value="1"></el-option>
+        <el-option label="资质驳回" value="2"></el-option>
+        <el-option label="待录入OA单号" value="3"></el-option>
+        <el-option label="全部" value="-1"></el-option>
+      </el-select>
+    </el-form-item>
+    <el-form-item>
+      <el-checkbox v-model="searchData.checked">全国</el-checkbox></el-form-item>
+    <el-form-item>
+      <el-button type="primary" @click="onSubmit">查询</el-button>
+    </el-form-item>
+  </el-form>
+
+  <!--列表 table-->
+  <el-table :data="formData" highlight-current-row v-loading="listLoading" style="width: 100%;">
+    <!-- 供应商名称 -->
+    <el-table-column prop="supplierName" label="供应商名称" width="" sortable>
+    </el-table-column>
+    <!-- 经营分类 -->
+    <el-table-column prop="type" label="经营分类" width="" sortable>
+
+      <template scope="scope">
+        <p v-for="key in scope.row.type" style="overflow: hidden">
+          <span style="float: left;margin-right: 10px;">{{key.txt}}</span>
+          <el-input placeholder="请输入OA号" size="mini" style="width:100px;float: left;margin-right: 5px;"></el-input>
+          <el-button size="mini" style="float:left">保存</el-button>
+        </p>
+      </template>
+    <!-- 状 态 -->
+    </el-table-column>
+    <el-table-column prop="status" label="状 态" width="" sortable>
+      <template scope="scope">
+        <el-popover ref="popover1" placement="bottom-start" width="200" trigger="hover">
+          <div style="text-align: right; margin-right : 10px">
+            <span>某某某</span> 
+            <span>2017-5-15</span>
+          </div>
+          <p>三大纪律贵金属代理机构开始大驾光临伤筋动骨了时间</p> 
+        </el-popover>
+        <el-popover ref="popover2" placement="bottom-start" width="200" trigger="hover">
+          <p>查看审批流程</p>
+          <div style="text-align: right; margin: 0">
+            <el-button size="mini" type="text" @click="visible2 = false">取消</el-button>
+            <el-button type="primary" size="mini" @click="visible2 = false">确定</el-button>
+          </div>
+        </el-popover>
+        <el-button v-popover:popover1 type="text" style="color:red">被驳回</el-button>
+        <el-button v-popover:popover2 type="text">查看审批流程</el-button>
+      </template>
+    </el-table-column>
+    <!-- 操作人 -->
+    <el-table-column prop="operator" label="操作人" width="" sortable>
+    </el-table-column>
+    <!-- 操作 -->
+    <el-table-column label="操作" width="150">
+      <template scope="scope">
+        <el-button size="small" @click="handleDetails(scope.$index, scope.row)">详情</el-button>
+        <el-button type="danger" size="small" @click="handleModify(scope.$index, scope.row)">修改</el-button>
+      </template>
+    </el-table-column>
+  </el-table>
+
+  <!--工具条-->
+  <div class="block" style="text-align:right">
+    <el-pagination
+      layout="total,prev, pager, next"
+      :page-size="10"
+      :total="20"
+      @current-change="handleCurrentChange">
+    </el-pagination>
+  </div>
+
+</div>
+
+
+
+<script type="text/javascript">
+var temp_formData =[{
+          supplierName:'王大婶鸡蛋',
+          type:[{txt:'米面粮油'}],
+          status:'审核中 查看审批流程',
+          operator:'李明',
+        },{
+          supplierName:'王大婶鸡蛋',
+          type:[{txt:'米面粮油'},{txt:'家禽肉类'},{txt:'家禽肉类'}],
+          status:'审核中 查看审批流程',
+          operator:'李明',
+        },{
+          supplierName:'1sdjlgjsdgw',
+          type:[{txt:'米面粮油'},{txt:'家禽肉类'}],
+          status:'',
+          operator:'',
+        },{
+          supplierName:'2sdjgogjw',
+          type:[{txt:'米面粮油'},{txt:'家禽肉类'}],
+          status:'',
+          operator:'',
+        }]
+
+  var suplist = new Vue({
+    el: '#si_eval',
+    data(){
+      return({
+        listLoading: false,
+        // 表单数据
+        formData:[...temp_formData],
+        page:1,
+        // 查询条件数据
+        searchData:{
+          skuName:'',
+          checkDate:'',
+          status:'-1',
+          checked:false
+
+        }
+      })
+    },
+    methods: {
+      //性别显示转换
+      onSubmit: function () {
+        console.log(JSON.stringify(suplist.searchData));
+      },
+      //详情
+      handleDetails: function (index, row) {
+        this.editFormVisible = true;
+        this.editForm = Object.assign({}, row);
+      },
+      //修改
+      handleModify:function(index,row){
+
+      },
+      handleCurrentChange:function(page){
+        this.page = page;
+
+      }
+    }
+
+  })
+</script>
+
+</body>
+</html>

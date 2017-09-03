@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <meta charset="UTF-8">
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-default/index.css">
+  <!-- 先引入 Vue -->
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <!-- 引入组件库 -->
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+</head>
+<body>
+<style>
+
+</style>
+<div id="aptitude" class="aptitude">
+  {{name}}
+  <ul v-for="item in arr">
+    <!-- 创建一个 todo-item 组件的实例 -->
+    <todo-item v-bind:num="peo"></todo-item>
+
+  </ul>
+
+</div>
+
+<template id="tem1">
+  <li>这是个待办项{{num.name+num.age}}</li>
+</template>
+
+<script type="text/javascript">
+
+Vue.component('todo-item', {
+  props: ['num'],
+
+  template: "#tem1"
+})
+
+
+
+new Vue({
+  el:'#aptitude',
+  data () {
+    return {
+      arr:[11,223,34,44],
+      name:'liujinyu',
+      peo:{
+        name:'liujinyu',
+        age:23
+      }
+    };
+  }
+})
+</script>
+</body>
+</html>

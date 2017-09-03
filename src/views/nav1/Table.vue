@@ -164,6 +164,7 @@
 			handleCurrentChange(val) {
 				this.page = val;
 				this.getUsers();
+
 			},
 			//获取用户列表
 			getUsers() {

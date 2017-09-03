@@ -1,0 +1,478 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="author" content="">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>美菜-供应商管理系统</title>
+
+    <!-- 引入样式 -->
+     <link rel="stylesheet" type="text/css" href="http://newsrm-me.test.yunshanmeicai.com:8080/assets/css/bootstrap.css">
+     <link rel="stylesheet" type="text/css" href="http://newsrm-me.test.yunshanmeicai.com:8080/assets/css/new-srm.css">
+    <!-- 引入组件库 -->
+    <script type="text/javascript" src="http://newsrm-me.test.yunshanmeicai.com:8080/assets/js/vue.js"></script>
+    <script type="text/javascript" src="http://newsrm-me.test.yunshanmeicai.com:8080/assets/js/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="http://newsrm-me.test.yunshanmeicai.com:8080/assets/js/element-ui.min.js"></script> 
+    <script type="text/javascript" src="http://newsrm-me.test.yunshanmeicai.com:8080/assets/js/axios.min.js"></script>
+
+</head>
+
+<body>
+<div v-cloak id="srm-home">
+  <el-row>
+    <el-col :span="24" class="header">
+      <el-col :span="10" class="logo" :class="collapsed?'logo-collapse-width':'logo-width'">
+        {{sysName}}
+      </el-col>
+      <el-col :span="5">
+        <div class="tools" @click.prevent="collapse">
+          <i class="fa fa-align-justify"></i>
+        </div>
+      </el-col>
+      <el-col :span="9" class="userinfo">
+        <span class="user_name">
+          您好,{{userInfo.name}} ({{userInfo.role_name}})
+        </span>
+        <el-dropdown trigger="hover">
+            <span class="el-dropdown-link userinfo-inner">
+              {{userInfo.current_city_name}}
+              <i class="el-icon-caret-bottom el-icon--right"></i>
+          </span>
+          <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item @click.native="switchCity(city.id)" v-for="city in userInfo.own_cities" >
+                  {{city.name}}
+              </el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+        <a class="logout" href="/public/logout">
+            退出
+        </a>
+      </el-col>
+    </el-col>
+  </el-row>
+  <aside class="navbar-side" :class="collapsed ? 'menu-collapsed':'menu-expanded'">
+    <el-menu :default-active="pathname" class="el-menu-vertical-demo" unique-opened v-show="!collapsed"  @open="handleopen" @close="handleclose" @select="handleselect">
+      <template v-for="(item , index) in menus" v-if="!item.hidden">
+        <el-submenu :index="index+''" v-if="!item.leaf">
+            <template slot="title">
+              <i :class="item.iconCls"></i>
+              {{item.name}}
+            </template>
+            <el-menu-item v-for="child in item.children" :index="child.path" v-if="!child.hidden">
+              {{child.name}}
+            </el-menu-item>
+            </el-submenu>
+            <el-menu-item v-if="item.leaf && item.children.length>0" :index="item.children[0].path">
+                <i :class="item.iconCls"></i>
+                {{item.children[0].name}}
+            </el-menu-item>
+      </template>
+    </el-menu>
+    <!--导航菜单-折叠后-->
+    <ul class="el-menu el-menu-vertical-demo collapsed" v-show="collapsed" ref="menuCollapsed">
+      <li v-for="(item,index) in menus" v-if="!item.hidden" class="el-submenu item">
+        <template v-if="!item.leaf">
+          <div class="el-submenu__title" style="padding-left: 20px;" @mouseover="showMenu(index,true)" @mouseout="showMenu(index,false)"><i :class="item.iconCls"></i></div>
+          <ul class="el-menu submenu" :class="'submenu-hook-'+index" @mouseover="showMenu(index,true)" @mouseout="showMenu(index,false)">
+            <li v-for="child in item.children" v-if="!child.hidden" class="el-menu-item" style="padding-left: 40px;" :class="pathname==child.path?'is-active':''">{{child.name}}</li>
+          </ul>
+        </template>
+        <template v-else>
+          <li class="el-submenu">
+            <div class="el-submenu__title el-menu-item" style="padding-left: 20px;height: 56px;line-height: 56px;padding: 0 20px;" :class="pathname==item.children[0].path?'is-active':''" ><i :class="item.iconCls"></i></div>
+          </li>
+        </template>
+      </li>
+    </ul>
+  </aside>
+</div>
+<div class="page-wrapper">
+  <div v-cloak id="supplier" v-loading="loading" element-loading-text="拼命加载中">
+
+    <el-form :inline="true" :model="formData" class="demo-form-inline" align="left">
+        <el-form-item label="供应商编码">
+            <el-input v-model="formData.basicSupplierNo" placeholder="供应商编码"></el-input>
+        </el-form-item>
+        <el-form-item label="供应商名称">
+            <el-input v-model="formData.basicSupplierName" placeholder=""></el-input>
+        </el-form-item>
+        <el-form-item label="供应商类型">
+            <el-select v-model="formData.supplierType" filterable placeholder="请选择">
+                <el-option label="全部" value="99"></el-option>
+                <el-option
+                        v-for="(item,index) in supplierType"
+                        :key="item.id"
+                        :label="item.value"
+                        :value="item.id">
+                </el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item label="申报时间">
+            <el-date-picker
+                    @change="changeDate"
+                    v-model="formData.applyTime"
+                    format="yyyy-MM-dd"
+                    type="daterange"
+                    placeholder="选择时间范围">
+            </el-date-picker>
+        </el-form-item>
+        <el-form-item label="经营分类">
+            <el-select v-model="formData.fClass1" filterable placeholder="请选择">
+                <el-option
+                        v-for="(item,index) in classList"
+                        :key="item.id"
+                        :label="item.name"
+                        :value="item.id">
+                </el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item label="供应商状态">
+            <el-select v-model="formData.supplierStatus" filterable placeholder="请选择">
+                <el-option label="全部" value="99"></el-option>
+                <el-option
+                        v-for="(item,index) in supplierStatus"
+                        :key="item.id"
+                        :label="item.value"
+                        :value="item.id">
+                </el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item label="合同状态">
+            <el-select v-model="formData.contractStatus" filterable placeholder="请选择">
+                <el-option label="全部" value="99"></el-option>
+                <el-option
+                        v-for="(item,index) in contractStatus"
+                        :key="item.id"
+                        :label="item.value"
+                        :value="item.id">
+                </el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item label="">
+            <el-checkbox v-model="formData.isCountry">是否全国</el-checkbox>
+        </el-form-item>
+        <el-form-item>
+            <el-button type="primary" @click="onSubmit">查询</el-button>
+        </el-form-item>
+    </el-form>
+    <el-table
+            :data="tableData"
+            border
+            style="width: 100%">
+        <el-table-column
+                align="center"
+                label="供应商编码"
+                prop="supplierNo">
+        </el-table-column>
+        <el-table-column
+                align="center"
+                label="供应商名称"
+                prop="supplierName">
+        </el-table-column>
+        <el-table-column
+                align="center"
+                label="登陆账号"
+                prop="defaultAccount">
+        </el-table-column>
+        <el-table-column
+                align="center"
+                label="供应商类型"
+                prop="supplierType">
+        </el-table-column>
+        <el-table-column
+                align="center"
+                label="经营分类"
+                prop="class1">
+        </el-table-column>
+        <el-table-column
+                align="center"
+                label="联系人">
+            <template scope="scope">
+               <div>{{scope.row.contactPerson}}</div>
+                {{scope.row.contactPhone}}
+            </template>
+        </el-table-column>
+        <el-table-column
+                align="center"
+                label="建档时间"
+                prop="createTime">
+        </el-table-column>
+        <el-table-column
+                align="center"
+                label="合同"
+                prop="contractStatus">
+        </el-table-column>
+        <el-table-column
+                align="center"
+                label="状态">
+            <template scope="scope">
+                {{scope.row.supplierStatus}}
+                <el-button type="text" size="small">管理</el-button>
+            </template>
+        </el-table-column>
+        <el-table-column
+                label="操作"
+                width="150">
+            <template scope="scope">
+                <el-button @click="handleClick" type="text" size="small">详情</el-button>
+                <el-button type="text" size="small">城市</el-button>
+                <el-button type="text" size="small">设置pop商</el-button>
+                <el-button type="text" size="small">拓展分类</el-button>
+            </template>
+        </el-table-column>
+    </el-table>
+    <!--工具条-->
+    <el-col :span="24" class="pagination">
+        <el-pagination
+                style="float:right;"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="formData.offset"
+                :page-sizes="[20, 50, 100, 200]"
+                :page-size="formData.limit"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="total">
+        </el-pagination>
+    </el-col>
+</div>
+<script type="text/javascript">
+    new Vue({
+        el: '#supplier',
+        created: function () {
+            this.getClassOne();
+            this.getPageList();
+            this.getSupplierStatus();
+            this.getContractStatus();
+            this.getSupplierType();
+        },
+        data: {
+            loading: false,
+            date: '',
+            total: 0,
+            classList: [],
+            formData: {
+                basicSupplierNo: '',
+                basicSupplierName: '',
+                supplierStatus: '',
+                contractStatus: '',
+                supplierType: '',
+                fClass1: '',
+                fCity: 0,
+                startDate: '',
+                endDate: '',
+                isCountry: '',
+                offset: 1,
+                limit: 20,
+            },
+            tableData: []
+        },
+        methods: {
+            onSubmit: function () {
+                this.getPageList();
+            },
+            handleSizeChange: function (val) {
+                this.formData.limit = val;
+            },
+            handleCurrentChange: function (val) {
+                this.formData.offset = val;
+                this.getPageList();
+            },
+            changeDate: function (val) {
+                this.date = val.split(' - ');
+            },
+            getClassOne: function () {
+                //一级分类
+                var _this = this;
+                axios.get('/public/getCategory1').then(function (response) {
+                    if (response.data.ret == 1) {
+                        _this.classList = response.data.data;
+                    }
+                    ;
+                }).catch(function (err) {
+                    console.log('err===>', err);
+                });
+            },
+            getSupplierStatus: function () {
+                //供应商状态
+                var _this = this;
+                axios.get('/supplier/supplierStatus').then(function (response) {
+                    if (response.data.ret == 1) {
+                        _this.supplierStatus = response.data.data;
+                    }
+                    ;
+                }).catch(function (err) {
+                    console.log('err===>', err);
+                });
+            },
+            getContractStatus: function () {
+                //合同状态
+                var _this = this;
+                axios.get('/supplier/contractStatus').then(function (response) {
+                    if (response.data.ret == 1) {
+                        _this.contractStatus = response.data.data;
+                    }
+                }).catch(function (err) {
+                    console.log('err===>', err);
+                });
+            },
+            getSupplierType: function () {
+                //供应商类型
+                var _this = this;
+                axios.get('/supplier/supplierType').then(function (response) {
+                    if (response.data.ret == 1) {
+                        _this.supplierType = response.data.data;
+                    }
+                }).catch(function (err) {
+                    console.log('err===>', err);
+                });
+            },
+            getPageList: function () {
+                //表格数据
+                var _this = this;
+                _this.loading = true;
+                _this.formData.startDate = _this.date[0];
+                _this.formData.endDate = _this.date[1];
+                axios.post('/supplier/querySupplierList', _this.formData).then(function (response) {
+                    _this.loading = false;
+                    if (response.data.ret == 1) {
+                        _this.tableData = response.data.rows;
+                        _this.formatDate.total = response.data.total;
+                    }else{
+                        this.$message({
+                            showClose: true,
+                            message: response.data.errMsg,
+                            type: 'error'
+                        });
+                    }
+
+                }).catch(function (err) {
+                    _this.loading = false;
+                    console.log('err===>', err);
+                });
+            },
+        }
+    })
+</script>
+
+
+
+
+
+
+
+
+
+
+</div>
+
+<script type="text/javascript">
+    var app = new Vue({
+        el: '#srm-home',
+        created: function() {
+            this.getUserInfo();
+        },
+        data: {
+            sysName:'供应商管理系统',
+            collapsed:false,
+            userInfo:{},
+            pathname:window.location.pathname,
+            menus:[
+              {
+                  path: '/',
+                  name: '',
+                  iconCls: 'fa fa-address-card',
+                  leaf: true,//只有一个节点
+                  children: [
+                      { path: '/', name: '首页' }
+                  ]
+              },
+              {
+                  path: '/',
+                  name: '供应商产品库',
+                  iconCls: 'el-icon-message',
+                  children: [
+                      { path: '/supplierProduct/biddingSku',  name: '新品竞标'}
+                  ]
+              },
+              // {
+              //     path: '/',
+              //     name: '供应商管理',
+              //     iconCls: 'el-icon-message',
+              //     children: [
+              //         { path: '/supplier/register/index',  name: '注册供应商'},
+              //         { path: '/supplier/supplier',  name: '信息维护' }
+              //     ]
+              // },
+              {
+                  path: '/',
+                  name: '供应商申报',
+                  iconCls: 'el-icon-message',
+                  children: [
+                      { path: '/supplier/apply/index',  name: '供应商申报'},
+//                      { path: '/supplier/apply/addindex',  name: '新供应商申报' },
+                      { path: '/supplier/audit/index',  name: '供应商审核' }
+                  ]
+              },
+              {
+                  path: '/',
+                  name: '供应商档案',
+                  iconCls: 'el-icon-message',
+                  children: [
+                      { path: '/supplier/supplier/',  name: '供应商档案管理'}
+                  ]
+              },
+              {
+                  path: '/',
+                  name: '',
+                  iconCls: '',
+                  leaf: true,//只有一个节点
+                  children: [
+                      { path: '/',  name: '供应商账号维护'}
+                  ]
+              }
+            ],
+        },
+        methods: {
+            onSubmit:function() {
+
+            },
+            handleopen:function () {
+
+            },
+            handleclose:function() {
+
+            },
+            handleselect: function (a, b) {
+                location.href = a;
+            },
+            //折叠导航栏
+            collapse:function(){
+            },
+            showMenu:function(i,status){
+                var index = 'submenu-hook-' + i;
+                var el = this.$refs.menuCollapsed.getElementsByClassName(index);
+                el[0].style.display==status?'block':'none';
+            },
+            getUserInfo:function() {
+                var _this = this;
+                //获取用户相关信息
+              axios.post('/public/getUserInfo').then(function(response){
+                if (response.data.ret == 1) {
+                   _this.userInfo = response.data.data;
+                };
+              }).catch(function(err){
+                  _this.$message.error('错了哦，这是一条错误消息');
+              });
+            },
+            switchCity:function (cityId) {
+                location.href='/public/switchCity?cityId=' + cityId;
+            }
+        },
+    })
+</script>
+
+</body>
+</html>
+

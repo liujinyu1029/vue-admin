@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <meta charset="UTF-8">
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-default/index.css">
+  <!-- 先引入 Vue -->
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <!-- 引入组件库 -->
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+</head>
+<body>
+<style>
+.el-dialog--tiny{width:80%;}
+</style>
+<div id="aptitude" class="aptitude">
+
+<el-form ref="register_dom_3" :rules="rules"  :model="form_step_3" label-width="150px" >
+  <el-form-item label='input check' prop='inputcheck'>
+    <el-input v-model.email='form_step_3.inputcheck'></el-input>
+  </el-form-item>
+  <!-- <el-form-item label="营业执照电子版" prop="upLoad">
+      <span style="color:#aaa">请上传扫描的电子版且必须加盖企业彩色公章</span>
+      <el-upload
+              v-model="form_step_3.upLoad"
+              action="https://jsonplaceholder.typicode.com/posts/"
+              list-type="picture-card"
+              :multiple='true'
+              :file-list="form_step_3.fileList"
+              :on-preview="handlePictureCardPreview"
+              :on-remove="handleRemove">
+          <i class="el-icon-plus"></i>
+      </el-upload>
+      <el-dialog v-model="dialogVisible" size="tiny">
+          <img width="100%" :src="dialogImageUrl" alt="">
+      </el-dialog>
+      <span style="color:#aaa">文件大小2MB以内，支持JPG、BMP、JPEG、PNG格式</span>
+  </el-form-item> -->
+  <el-form-item label="营业执照电子版1" prop="upLoad1">
+      <span style="color:#aaa">请上传扫描的电子版且必须加盖企业彩色公章</span>
+      <el-upload
+              v-model="form_step_3.upLoad1"
+              action="http://srm-me.test.yunshanmeicai.com/supplierProduct/uploadPic"
+              list-type="picture-card"
+              :multiple='true'
+              :file-list="form_step_3.filelistF"
+              :before-upload="beforeAvatarUpload"
+              :on-success="handleAvatarSuccess"
+              :on-preview="handlePictureCardPreview"
+              :on-remove="handleRemove">
+          <i class="el-icon-plus"></i>
+      </el-upload>
+      <el-dialog v-model="dialogVisible" size="tiny">
+          <img width="100%" :src="dialogImageUrl" alt="">
+      </el-dialog>
+      <span style="color:#aaa">文件大小2MB以内，支持JPG、BMP、JPEG、PNG格式</span>
+  </el-form-item>
+</el-form>
+<el-button type="primary" @click="step_3_validated">check</el-button>
+
+
+</div>
+
+<script type="text/javascript">
+var app = new Vue({
+  el:'#aptitude',
+  data () {
+    //验证 一级分类
+    var validate_image = (rule, value, callback, source, options) => {
+      console.log(rule, value, callback, source, options);
+      if(!this.form_step_3.fileList.length){
+        return callback(new Error('还有未选择的一级分类'))
+      }
+      return callback(new Error('xxxx'))
+      callback()
+    };
+
+    return {
+
+      dialogVisible:false,
+      dialogImageUrl:'',
+      form_step_3:{
+        inputcheck:1,
+        fileList:[{
+          name: 'food.jpeg',
+          url: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100'
+        }, {
+          name: 'food2.jpeg',
+          url: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100'
+        }],
+        filelistF:[{
+          name: 'food.jpeg',
+          url: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100'
+        }, {
+          name: 'food2.jpeg',
+          url: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100'
+        }],
+        upLoad:'',
+        upLoad1:''
+          
+      },
+      rules:{
+        upLoad:[{ required: true,validator:validate_image}],
+        upLoad1:[
+            { required: true, message: '还是没成'},
+            {type: 'enum',message: '请输入正确电话号码'}
+        ],
+        inputcheck:[
+            { required: true, message: 'not null'},
+            {type: 'boolean',message: '请输入正确电话号码'}
+        ]
+      }
+    };
+  },
+  methods:{
+    handlePictureCardPreview:function(file) {
+        this.dialogImageUrl = file.url;
+        this.dialogVisible = true;
+    },
+    handleRemove(){},
+    handleAvatarSuccess:function(file){
+      console.log(file)
+    },
+    beforeAvatarUpload(file) {console.dir(file)
+      const isJPG = file.type === 'image/jpeg' ||file.type === 'image/bmp' ||
+                    file.type === 'image/png';
+      ;
+      const isLt2M = file.size / 1024 / 1024 < 2;
+      if (!isJPG) {
+        this.$message.error('上传图片只支持JPG、BMP、JPEG、PNG格式');
+      }
+      if (!isLt2M) {
+        this.$message.error('上传头像图片大小不能超过 2MB!');
+      }
+      return isJPG && isLt2M;
+    },
+
+    step_3_validated(){
+      // 验证表单
+      this.$refs.register_dom_3.validate(valid => {
+          if (valid) {
+              alert('submit!');
+          } else {
+            // console.log('error submit!!');
+              return false;
+          }
+      });
+    }
+    
+  }
+})
+</script>
+</body>
+</html>

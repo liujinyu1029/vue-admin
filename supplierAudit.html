@@ -1,0 +1,329 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="author" content="">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>美菜-供应商管理系统</title>
+
+    <!-- 引入样式 -->
+     <link rel="stylesheet" type="text/css" href="http://newsrm-me.test.yunshanmeicai.com:8080/assets/css/bootstrap.css">
+     <link rel="stylesheet" type="text/css" href="http://newsrm-me.test.yunshanmeicai.com:8080/assets/css/new-srm.css">
+    <!-- 引入组件库 -->
+    <script type="text/javascript" src="http://newsrm-me.test.yunshanmeicai.com:8080/assets/js/vue.js"></script>
+    <script type="text/javascript" src="http://newsrm-me.test.yunshanmeicai.com:8080/assets/js/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="http://newsrm-me.test.yunshanmeicai.com:8080/assets/js/element-ui.min.js"></script> 
+    <script type="text/javascript" src="http://newsrm-me.test.yunshanmeicai.com:8080/assets/js/axios.min.js"></script>
+    <script type="text/javascript" src="http://newsrm-me.test.yunshanmeicai.com:8080/assets/js/new-srm.js"></script>
+</head>
+<body>
+<div v-cloak id="srm-home">
+  <el-row>
+    <el-col :span="24" class="header">
+      <el-col :span="10" class="logo" :class="collapsed?'logo-collapse-width':'logo-width'">
+        {{sysName}}
+      </el-col>
+      <el-col :span="5">
+        <div class="tools" @click.prevent="collapse">
+          <i class="fa fa-align-justify"></i>
+        </div>
+      </el-col>
+      <el-col :span="9" class="userinfo">
+        <span class="user_name">
+          您好,{{userInfo.name}} ({{userInfo.role_name}})
+        </span>
+        <el-dropdown trigger="hover">
+            <span class="el-dropdown-link userinfo-inner">
+              {{userInfo.current_city_name}}
+              <i class="el-icon-caret-bottom el-icon--right"></i>
+          </span>
+          <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item @click.native="switchCity(city.id)" v-for="city in userInfo.own_cities" >
+                  {{city.name}}
+              </el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+        <a class="logout" href="/public/logout">
+            退出
+        </a>
+      </el-col>
+    </el-col>
+  </el-row>
+  <aside class="navbar-side" :class="collapsed ? 'menu-collapsed':'menu-expanded'">
+    <el-menu :default-active="pathname" class="el-menu-vertical-demo" unique-opened v-show="!collapsed"  @open="handleopen" @close="handleclose" @select="handleselect">
+      <template v-for="(item , index) in menus" v-if="!item.hidden">
+        <el-submenu :index="index+''" v-if="!item.leaf">
+            <template slot="title">
+              <i :class="item.iconCls"></i>
+              {{item.name}}
+            </template>
+            <el-menu-item v-for="child in item.children" :index="child.path" v-if="!child.hidden">
+              {{child.name}}
+            </el-menu-item>
+            </el-submenu>
+            <el-menu-item v-if="item.leaf && item.children.length>0" :index="item.children[0].path">
+                <i :class="item.iconCls"></i>
+                {{item.children[0].name}}
+            </el-menu-item>
+      </template>
+    </el-menu>
+    <!--导航菜单-折叠后-->
+    <ul class="el-menu el-menu-vertical-demo collapsed" v-show="collapsed" ref="menuCollapsed">
+      <li v-for="(item,index) in menus" v-if="!item.hidden" class="el-submenu item">
+        <template v-if="!item.leaf">
+          <div class="el-submenu__title" style="padding-left: 20px;" @mouseover="showMenu(index,true)" @mouseout="showMenu(index,false)"><i :class="item.iconCls"></i></div>
+          <ul class="el-menu submenu" :class="'submenu-hook-'+index" @mouseover="showMenu(index,true)" @mouseout="showMenu(index,false)">
+            <li v-for="child in item.children" v-if="!child.hidden" class="el-menu-item" style="padding-left: 40px;" :class="pathname==child.path?'is-active':''">{{child.name}}</li>
+          </ul>
+        </template>
+        <template v-else>
+          <li class="el-submenu">
+            <div class="el-submenu__title el-menu-item" style="padding-left: 20px;height: 56px;line-height: 56px;padding: 0 20px;" :class="pathname==item.children[0].path?'is-active':''" ><i :class="item.iconCls"></i></div>
+          </li>
+        </template>
+      </li>
+    </ul>
+  </aside>
+</div>
+<div class="page-wrapper">
+  <style>
+    .tit{border-bottom:3px solid #1298B3;overflow: hidden;}
+    .tit h3{background:#1298B3;color:#fff;line-height: 40px;height: 40px;margin: 0;padding:0 15px;font-size: 16px;font-weight: normal;float:left;}
+    .tit a{float:right;border:1px solid rgba(204, 204, 204, 1);color:#666;padding:5px 10px;display:block;}
+    .tit a:hover{text-decoration: none;background:#d0d0d0}
+</style>
+<div class="tit">
+	<h3>供应商列表</h3>
+</div>
+<div id="supplierAudit" v-loading="loading" element-loading-text="拼命加载中" style="margin-top:20px;">
+  <!-- 表单 Form -->
+  <el-form :inline="true" :model="formData" class="demo-form-inline">
+    <el-form-item label="供应商名称">
+      <el-input v-model="formData.supplierName" placeholder="请输入供应商名称"></el-input>
+    </el-form-item>
+    <el-form-item label="申报日期">
+      <el-date-picker
+        @change="changeDate"
+        v-model="date"
+        format="yyyy-MM-dd"
+        type="daterange"
+        placeholder="选择时间范围">
+      </el-date-picker>
+    </el-form-item>
+    <el-form-item>
+      <el-checkbox v-model="formData.isAllCity">全国</el-checkbox></el-form-item>
+    <el-form-item>
+      <el-button type="primary" @click="onSubmit">查询</el-button>
+    </el-form-item>
+  </el-form>
+
+  <!--表格 Table-->
+  <el-table :data="tableData" border highlight-current-row v-loading="listLoading" style="width: 100%;">
+    <!-- 供应商名称 -->
+    <el-table-column prop="supplierName" label="供应商名称" width="" sortable></el-table-column>
+    <!-- 提交人 -->
+    <el-table-column prop="operator" label="提交人" width="" sortable></el-table-column>
+    <!-- 提交时间 -->
+    <el-table-column prop="operatorTime" label="提交时间" width="" sortable></el-table-column>
+    <!-- 状态 -->
+    <el-table-column prop="status" label="状态" width="" sortable></el-table-column>
+    <!-- 状态名称 -->
+    <el-table-column prop="supplierStatusName" label="状态名称" width="" sortable></el-table-column>
+
+  </el-table>
+  <!--工具条-->
+  <el-col :span="24" class="pagination">
+      <el-pagination
+              style="float:right;"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+              :current-page="formData.offset / formData.limit + 1"
+              :page-sizes="[20, 50, 100, 200]"
+              :page-size="formData.limit"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="total">
+      </el-pagination>
+  </el-col>
+</div>
+<script type="text/javascript">
+  var suplist = new Vue({
+    el: '#supplierAudit',
+    created: function () {
+        this.getPageList();
+    },
+    data(){
+      return({
+        loading: false,
+        page:1,
+        // 查询 表单数据
+        formData:{
+          supplierName:'',//供应商名称
+          isAllCity:'',//全国
+          beginDate:'',//申报日期开始
+          endDate:'',//申报日期截止
+          limit: 20,
+          offset: 0,
+        },
+        tableData:[]
+      })
+    },
+    methods: {
+      //--------form 部分--------------
+      //切换日期
+      changeDate: function (val) {
+          this.date = val.split(' - ');
+      },
+      //提交form条件，获取返回table表结果，并刷新table
+      getPageList: function () {
+          var _this = this;
+          _this.loading = true;
+          _this.formData.startDate = _this.date[0];
+          _this.formData.endDate = _this.date[1];
+          axios.post('/supplier/audit/auditingList', _this.formData).then(function (response) {
+              _this.loading = false;
+              if (response.data.ret == 1) {
+                  _this.tableData = response.data.rows;
+                  _this.total = response.data.total;
+              } else {
+                  _this.$message({
+                      showClose: true,
+                      message: response.data.msg,
+                      type: 'error'
+                  });
+              }
+          }).catch(function (err) {
+              _this.loading = false;
+              _this.$message({
+                  showClose: true,
+                  message: err.msg,
+                  type: 'error'
+              });
+          });
+      },
+      //查询
+      onSubmit: function () {
+          this.formData.offset = 0;
+          this.getPageList();
+      },
+      //--------table 部分--------------
+      //page-size改变
+      handleSizeChange: function (val) {
+          this.formData.limit = val;
+          this.formData.offset = 0;
+          this.getPageList();
+      },
+      //翻页
+      handleCurrentChange: function (val) {
+          this.formData.offset = (val - 1) * this.formData.limit;
+          this.getPageList();
+      },
+
+
+    }
+  })
+</script>
+</div>
+
+<script type="text/javascript">
+    var app = new Vue({
+        el: '#srm-home',
+        created: function() {
+            this.getUserInfo();
+        },
+        data: {
+          
+
+            sysName:'供应商管理系统',
+            collapsed:false,
+            userInfo:{},
+            pathname:window.location.pathname,
+            menus:[
+              {
+                  path: '/',
+                  name: '',
+                  iconCls: 'fa fa-address-card',
+                  leaf: true,//只有一个节点
+                  children: [
+                      { path: '/', name: '首页' }
+                  ]
+              },
+              {
+                  path: '/',
+                  name: '供应商产品库',
+                  iconCls: 'el-icon-message',
+                  children: [
+                      { path: '/supplierProduct/biddingSku',  name: '新品竞标'}
+                  ]
+              },
+              {
+                  path: '/',
+                  name: '供应商申报',
+                  iconCls: 'el-icon-message',
+                  children: [
+                      { path: '/supplier/apply/index',  name: '供应商申报'},
+                      { path: '/supplier/audit/index',  name: '供应商审核' }
+                  ]
+              },
+              {
+                  path: '/',
+                  name: '供应商档案',
+                  iconCls: 'el-icon-message',
+                  children: [
+                      { path: '/supplier/supplier/',  name: '供应商档案管理'}
+                  ]
+              },
+              {
+                  path: '/',
+                  name: '',
+                  iconCls: '',
+                  leaf: true,//只有一个节点
+                  children: [
+                      { path: '/',  name: '供应商账号维护'}
+                  ]
+              }
+            ],
+        },
+        methods: {
+            onSubmit:function() {
+
+            },
+            handleopen:function () {
+
+            },
+            handleclose:function() {
+
+            },
+            handleselect: function (a, b) {
+                location.href = a;
+            },
+            //折叠导航栏
+            collapse:function(){
+            },
+            showMenu:function(i,status){
+                var index = 'submenu-hook-' + i;
+                var el = this.$refs.menuCollapsed.getElementsByClassName(index);
+                el[0].style.display==status?'block':'none';
+            },
+            getUserInfo:function() {
+                var _this = this;
+                //获取用户相关信息
+              axios.post('/public/getUserInfo').then(function(response){
+                if (response.data.ret == 1) {
+                   _this.userInfo = response.data.data;
+                };
+              }).catch(function(err){
+                  _this.$message.error('错了哦，这是一条错误消息');
+              });
+            },
+            switchCity:function (cityId) {
+                location.href='/public/switchCity?cityId=' + cityId;
+            }
+        },
+    })
+</script>
+
+</body>
+</html>
+

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <meta charset="UTF-8">
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-default/index.css">
+  <!-- 先引入 Vue -->
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <!-- 引入组件库 -->
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+</head>
+<body>
+<style>
+
+</style>
+<div id="aptitude" class="aptitude">
+<el-form ref='demo' :model="form_step_2" :rules='rules' label-width="110px">
+  <!-- <el-form-item label='xxxx' prop="my_purchaser">
+      <el-select filterable clearable v-model="form_step_2.my_purchaser" placeholder="请选择">
+          <el-option v-for="(p,i) in form_step_2.purchasers" :label="p" :value="i"></el-option>
+      </el-select>
+  </el-form-item> -->
+  <el-row v-for="(item ,index) in form_step_2.coopInfo" style="margin:10px 10px 10px 0">
+      <el-col style="border: 1px solid #bbb;border-radius: 5px;width:850px">
+          <el-form-item label='一级分类' prop="class1" style="margin-top: 10px;">
+              <!-- <el-radio-group v-model="item.class1" :disabled='form_step_2.coopInfo[index+1]'> -->
+              <el-radio-group v-model="item.class1" @change='step_3_validated'>
+                  <el-radio
+                          v-for='(p,i) in form_step_2.class_list'
+                          v-if="check(p,index)"
+                          :label='p.id'
+                          :value="p.id"
+                  >
+                      {{p.name}}
+                  </el-radio>
+              </el-radio-group>
+          </el-form-item>
+          <el-form-item label='采购专员' prop="purchaser">
+              <el-select filterable clearable @change='step_3_validated' v-model="item.purchaser" placeholder="请选择">
+                  <el-option v-for="(p,i) in form_step_2.purchasers" :label="p" :value="i"></el-option>
+              </el-select>
+          </el-form-item>
+          <el-form-item>
+              <el-button @click="removeDomain(index)" v-show="index!=0" size="small" icon="delete">删除</el-button>
+          </el-form-item>
+      </el-col>
+  </el-row>
+</el-form>
+<el-button type="primary" @click='addDomain'><i class="el-icon-plus"></i> 继续添加</el-button>
+<el-button type="primary" @click='step_3_validated'><i class="el-icon-plus"></i> 验证</el-button>
+</div>
+
+<script type="text/javascript">
+var gg;
+var app = new Vue({
+  el:'#aptitude',
+  data () {
+    //验证 一级分类
+    var validate_class1 = (rule, value, callback, source, options) => {
+      var st = 0;
+      this.form_step_2.coopInfo.forEach(function(v){
+        if (!(''+v.class1)) st++;
+      })
+      !st && callback() || callback(new Error('还有未选择的一级分类'));
+    };
+    //验证 采购专员
+    var validate_purchaser = (rule, value, callback, source, options) => {
+      var st = 0;
+      this.form_step_2.coopInfo.forEach(function(v){
+        if (!(''+v.purchaser)) st++;
+      })
+      !st && callback() || callback(new Error('还有未选择的采购专员'));
+    };
+    return {
+      form_step_2:{
+          class_list:[{id:1,name:"蔬菜"},{id:2,name:"豆腐"},{id:3,name:"鱼肉"},{id:4,name:"海带"}],
+          class_list_f:[],
+          my_purchaser:'',
+          purchaser:'',
+          purchasers:['采购经理','采购主管','采购员'],
+          coopInfo:[{class1:'',purchaser:''}],//合作信息列表
+          deliveryType:'1',//配送方式 1：自营
+          useSortingApp:'1',//是否使用分拣客户端 1：是2：否
+      },
+      rules:{
+        class1:[{ required: true,validator:validate_class1}],
+        purchaser:[{ required: true,validator:validate_purchaser}],
+        my_purchaser:[{ required: true,message: '请选择采购专员'}]
+      }
+    };
+  },
+  methods:{
+    check(p,index){
+      while(index--){
+        if (p.id == this.form_step_2.coopInfo[index].class1)
+          return false
+      }
+      return true;
+    },
+    addDomain(){
+      this.form_step_2.coopInfo.push({
+          class1:'',//一级分类ID
+          purchaser:''//采购专员
+      })
+    },
+    removeDomain(index) {
+      this.form_step_2.coopInfo.splice(index,1);
+    },
+    step_3_validated(){
+      // 验证表单
+      this.$refs.demo.validate(valid => {
+          if (valid) {
+              alert('submit!');
+          } else {
+            // console.log('error submit!!');
+              return false;
+          }
+      });
+    }
+
+    
+  }
+})
+</script>
+</body>
+</html>

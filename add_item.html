@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <meta charset="UTF-8">
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-default/index.css">
+  <!-- 先引入 Vue -->
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <!-- 引入组件库 -->
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+</head>
+<body>
+<style>
+
+</style>
+<div id="aptitude" class="aptitude">
+<el-form v-for="(item ,index) in registerData.coopInfo" ref="liu" :model="registerData.coopInfo[index]">
+  <el-form   :rules="rules" style="border: 1px solid #bbb;border-radius: 5px;width:450px;margin:20px;" label-width='100px'>
+      <div >
+        <el-form-item label='一级分类' prop="class1" style="margin-top: 10px;">
+          <el-radio-group v-model="item.class1">
+              <el-radio label="1">米面粮油</el-radio>
+              <el-radio label="2">米面粮油</el-radio>
+              <el-radio label="3">米面粮油</el-radio>
+          </el-radio-group>
+      </el-form-item>
+      <el-form-item label='采购专员' prop="purchaser">
+          <el-select filterable clearable v-model="item.purchaser" placeholder="请选择">
+              <el-option label="111" value="1"></el-option>
+              <el-option label="222" value="2"></el-option>
+              <el-option label="333" value="3"></el-option>
+          </el-select>
+      </el-form-item>
+      <el-form-item>
+          <el-button @click="removeDomain(index)" v-show="index!=0" size="small" icon="delete">删除</el-button>
+      </el-form-item>
+      </div>
+  </el-form>
+</el-form>
+
+
+<el-button type="primary" @click='addDomain'><i class="el-icon-plus"></i> 继续添加</el-button>
+<el-button type="primary" @click='nextStep'><i class="el-icon-plus"></i> check</el-button>
+
+
+
+<!-- <el-form label-width="100px" :rules="rules" ref='liu' >
+ --><!-- <el-form-item >
+    <el-row v-for="(item ,index) in registerData.coopInfo" :model="registerData.coopInfo[index]" style="margin:10px 10px 10px 0">
+                            <el-col style="border: 1px solid #bbb;border-radius: 5px;width:450px">
+                                <el-form-item label='一级分类' prop="class1" style="margin-top: 10px;">
+                                    <el-radio-group v-model="item.class1">
+                                        <el-radio label="1">米面粮油</el-radio>
+                                        <el-radio label="2">米面粮油</el-radio>
+                                        <el-radio label="3">米面粮油</el-radio>
+                                    </el-radio-group>
+                                </el-form-item>
+                                <el-form-item label='采购专员' prop="purchaser">
+                                    <el-select filterable clearable v-model="item.purchaser" placeholder="请选择">
+                                        <el-option label="111" value="1"></el-option>
+                                        <el-option label="222" value="2"></el-option>
+                                        <el-option label="333" value="3"></el-option>
+                                    </el-select>
+                                </el-form-item>
+                                <el-form-item>
+                                    <el-button @click="removeDomain(index)" v-show="index!=0" size="small" icon="delete">删除</el-button>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+</el-form-item>
+
+<el-form-item>
+                            <el-button type="primary" @click='addDomain'><i class="el-icon-plus"></i> 继续添加</el-button>
+                        </el-form-item>
+                        <el-button type="primary" @click='nextStep'><i class="el-icon-plus"></i> check</el-button>
+                        </el-form-item>
+
+                      <el-form-item label="sjdlgs" prop='input'>
+<el-input v-model="registerData.input"></el-input>
+<!-- <el-input  v-model.number="registerData.contactPhone"></el-input> -->
+
+
+                     <!--  </el-form-item>
+
+
+<el-form-item label="radio" prop='radiotype'>
+                      <el-radio-group v-model="registerData.radiotype">
+                                        <el-radio label="1">米面粮油</el-radio>
+                                        <el-radio label="2">米面粮油</el-radio>
+                                        <el-radio label="3">米面粮油</el-radio>
+                                    </el-radio-group>
+
+                                    </el-form-item> -->
+<!-- </el-form>  -->
+</div>
+
+
+<script type="text/javascript">
+
+
+var app = new Vue({
+  el:'#aptitude',
+  data () {
+    return {
+      
+      registerData:{
+        dialogVisible:false,
+        dialogImageUrl:'',
+        class1:'',
+        radiotype:'',
+        input:'',
+
+        coopInfo:[{class1:'',purchaser:''}]
+      },
+      rules:{
+        class1:[{required:true,message:'message111'}],
+        input:[{required:true,message:'message222'}],
+        purchaser:[{required:true,message:'message111'}],
+        radiotype:[{required:true,message:'radiotype'}],
+
+
+      }
+    };
+  },
+  methods:{
+    addDomain(){
+      this.registerData.coopInfo.push({class1:'',purchaser:''})
+    },
+    handleRemove(file, fileList) {
+                console.log(file, fileList);
+            },
+    handlePictureCardPreview(file) {
+                this.registerData.dialogImageUrl = file.url;
+                this.dialogVisible = true;
+    },
+    nextStep:function() { //下一步
+        var name = 'liu';
+        // 验证表单
+        this.$refs.liu.validate(valid => {
+            if (valid) {
+                console.log(1111)
+            } else {
+                return false;
+            }
+        });
+    },
+  }
+})
+</script>
+</body>
+</html>

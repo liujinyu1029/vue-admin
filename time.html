@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <meta charset="UTF-8">
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-default/index.css">
+  <!-- 先引入 Vue -->
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <!-- 引入组件库 -->
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+</head>
+<body>
+<style>
+
+</style>
+<div id="aptitude" class="aptitude">
+<el-form ref='demo' :model="form_step_2" :rules="rules" label-width="110px">
+  <el-form-item label='input:' prop='input' :rules="{required:true,message:'请输入'}">
+      <el-input v-model='form_step_2.input'></el-input>
+  </el-form-item>
+  <el-form-item label="有效期(截止日)" prop="bizEndTime" :rules="{type: 'date', required: true, message: '请选择有效期'}">
+      <el-date-picker
+              v-model="form_step_2.bizEndTime"
+              format="yyyy-MM-dd"
+              type="date"
+              placeholder="有效期(截止日)"
+      >
+      </el-date-picker>
+  </el-form-item>
+  <el-form-item label='日期:' prop='date'>
+      <el-date-picker
+        v-model="form_step_2.date"
+        type="date"
+        placeholder="选择日期"
+      >
+      </el-date-picker>
+  </el-form-item>
+  <el-form-item label='日期11:'>
+      
+      <el-date-picker
+        v-model="date"
+        format="yy-MM-dd"
+        prop='date'
+        :rules="{type: 'date', required: true, message: '请选择有效期'}"
+
+        default-value = '2017-6-11'
+        type="date"
+        placeholder="选择日期"
+      >
+      </el-date-picker>
+     
+  </el-form-item>
+  <el-row v-for="(item ,index) in form_step_2.coopInfo" style="margin:10px 10px 10px 0">
+      <el-form-item 
+        label='日期' 
+
+        :prop="'coopInfo.' + index + '.data'" 
+        :rules="{required:true,message:'请输入date'}"
+        style="margin-top: 10px;"
+      >
+          <el-date-picker
+            v-model="item.data"
+            type="date"
+            placeholder="选择日期"
+          >
+          </el-date-picker>
+      </el-form-item>
+  </el-row>
+</el-form>
+<el-button type="primary" @click='addDomain'><i class="el-icon-plus"></i> 继续添加</el-button>
+<el-button type="primary" @click='validate'>验证</el-button>
+</div>
+
+<script type="text/javascript">
+var gg;
+var vm = new Vue({
+  el:'#aptitude',
+  data () {
+    var validate_date = (rule, value, callback) => {
+        if (!value) {
+            return callback(new Error('请输入日期'));
+        }
+        callback();
+        
+    };
+    return {
+      date:'',
+      form_step_2:{
+          bizEndTime:'2017-11-11',
+          input:'11',
+          date:'2017-11-11',
+          coopInfo:[{data:'2017-11-11'}],
+          
+      },
+      rules:{
+        date:[{ required: true,validator: validate_date, trigger: 'blur,change' }],
+      }
+    };
+  },
+  methods:{
+    alert(){
+      alert(111);
+    },
+    change(){
+      console.log(arguments)
+    },
+    validate(){
+      this.$refs['demo'].validate((valid) => {
+        console.log(valid)
+      })
+    },
+    addDomain(){
+      this.form_step_2.coopInfo.push({
+          data:''
+      })
+    },
+    
+
+    
+  }
+})
+</script>
+</body>
+</html>
